@@ -287,27 +287,34 @@ Sum::~Sum() {
 bool Sum::GetNext(Record& _record){
 
 	cout << "Run Sum: GETNEXT" << endl;
+	//Need sum results (int/double) and running sums
 	if (recordSent) return false;
 	int intSum = 0;
 	double doubleSum = 0;
 	while(producer->GetNext(_record)) {
 		int intResult = 0;
 		double doubleResult = 0;
+		//check to see if record is an int or double
 		Type t = compute.Apply(_record, intResult, doubleResult);
 		if (t == Integer)	intSum+= intResult;
 		if (t == Float)		doubleSum+= doubleResult;
 	}
-
+	//Both types for accurate running sum
 	double val = doubleSum + (double)intSum;
 	char* recSpace = new char[PAGE_SIZE];
+	//Current position in record is sizeof(int) * (number of atts + 1) and number of atts = 1
   int currentPosInRec = sizeof (int) * (2);
+	//Need pointer to current attribute in the record
 	((int *) recSpace)[1] = currentPosInRec;
 	*((double *) &(recSpace[currentPosInRec])) = val;
 	currentPosInRec += sizeof (double);
+	//Need pointer past end record
 	((int *) recSpace)[0] = currentPosInRec;
 
+	//Copy bits of records
 	Record sumRecord;
 	sumRecord.CopyBits( recSpace, currentPosInRec );
+	//free memory
 	delete [] recSpace;
 	_record = sumRecord;
 	recordSent = 1;
@@ -347,27 +354,32 @@ GroupBy::~GroupBy() {
 bool GroupBy::GetNext(Record& _record){
 
 	cout << "Run GroupBy: GETNEXT" << endl;
+	//Procecting atts & schema
 	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
 
+	//variables needed for running sum, iterators, and vector storages
 	int i = 0;
 	int runningIntSum = 0;
 	int runningDoubleSum = 0;
 	int iterator = 0;
 	int vectorIterator = 1;
-
 	vector<Attribute> attributeStorage;
 	vector<string> attributeNames;
+
+	//push back atts into storage
 	Schema copy = schemaOut;
 	attributeStorage = copy.GetAtts();
 	for(i = 1; i < copy.GetNumAtts(); i++){
 		attributeNames.push_back(attributeStorage[i].name);
 	}
+	//While records available, point to record bits
 	while(producer->GetNext(_record)){
-
 		KeyString name = attributeStorage[vectorIterator].name;
 		KeyDouble value;
 		int point = ((int*) _record.GetBits())[iterator + 1];
+		//if the name matches, means we group values
 		if(groups.IsThere(name)){
+			//INTEGER VALUES
 			if(attributeStorage[vectorIterator].type == Integer){
 				int *currentInt = (int*) &(_record.GetBits()[point]);
 				runningIntSum += *currentInt;
@@ -375,7 +387,7 @@ bool GroupBy::GetNext(Record& _record){
 				groups.Remove(name, name, value);
 				value = runningIntSum;
 				groups.Insert(name, value);
-			}
+			} //DOUBLE/FLOAT VALUES
 			else if (attributeStorage[vectorIterator].type == Float){
 				double *currentDouble = (double*) &(_record.GetBits()[point]);
 				runningDoubleSum += *currentDouble;
@@ -386,20 +398,25 @@ bool GroupBy::GetNext(Record& _record){
 			}
 		} else {
 			cout << "Not Found" << endl;
+			//If name is not found in storage, insert it
+			//INTEGER VALUES
 			if(attributeStorage[vectorIterator].type == Integer){
 				int *currentInt = (int*) &(_record.GetBits()[point]);
 				value = *currentInt;
 				groups.Insert(name, value);
 			}
+			//DOUBLE/FLOAT values
 			else if(attributeStorage[vectorIterator].type == Float){
 				double *currentDouble = (double*) &(_record.GetBits()[point]);
 				value = *currentDouble;
 				groups.Insert(name, value);
 			}
 		}
+		//Increment through records
 		vectorIterator++;
 		return true;
 	}
+	//Check through entire groupings
 		groups.MoveToStart();
 		for(int i = 0; i < groups.Length(); i++){
 			cout << groups.CurrentData() << endl;
@@ -448,11 +465,13 @@ bool WriteOut::GetNext(Record& _record){
 
 	_record.print(cout, schema);
 	cout << endl;
+	//If there are records, writeout their schema
 	if (check) {
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;
 		return true;
 	}
+	//No more records 
 	else {
 		outFileStream.close();
 		return false;
