@@ -93,7 +93,7 @@ int Record :: ExtractNextRecord (Schema& mySchema, FILE& textFile) {
 
 		// then we convert the data to the correct binary representation
 		if (atts[i].type == Integer) {
-			*((int *) &(recSpace[currentPosInRec])) = atoi (space);	
+			*((int *) &(recSpace[currentPosInRec])) = atoi (space);
 			currentPosInRec += sizeof (int);
 		}
 		else if (atts[i].type == Float) {
@@ -106,9 +106,9 @@ int Record :: ExtractNextRecord (Schema& mySchema, FILE& textFile) {
 				len += sizeof (int) - (len % sizeof (int));
 			}
 
-			strcpy (&(recSpace[currentPosInRec]), space); 
+			strcpy (&(recSpace[currentPosInRec]), space);
 			currentPosInRec += len;
-		} 
+		}
 	}
 
 	// the last thing is to set up the pointer to just past the end of the record
@@ -116,7 +116,7 @@ int Record :: ExtractNextRecord (Schema& mySchema, FILE& textFile) {
 
 	// and copy over the bits
 	bits = new char[currentPosInRec];
-	memcpy (bits, recSpace, currentPosInRec);	
+	memcpy (bits, recSpace, currentPosInRec);
 
 	delete [] space;
 	delete [] recSpace;
@@ -160,7 +160,7 @@ void Record :: Project (int* attsToKeep, int numAttsToKeep, int numAttsNow) {
 		}
 		else {
 			// subtract the start of the next field from the start of this field
-			totSpace += ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1]; 
+			totSpace += ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1];
 		}
 	}
 
@@ -183,11 +183,11 @@ void Record :: Project (int* attsToKeep, int numAttsToKeep, int numAttsNow) {
 		}
 		else {
 			// subtract the start of the next field from the start of this field
-			attLen = ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1]; 
+			attLen = ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1];
 		}
 
 		// set the start position of this field
-		((int *) newBits)[i + 1] = curPos;	
+		((int *) newBits)[i + 1] = curPos;
 
 		// and copy over the bits
 		memcpy (&(newBits[curPos]), &(bits[((int *) bits)[attsToKeep[i] + 1]]), attLen);
@@ -240,7 +240,7 @@ void Record :: MergeRecords (Record& left, Record& right,
 		}
 		else {
 			// subtract the start of the next field from the start of this field
-			totSpace += ((int *) rec_bits)[attsToKeep[i] + 2] - ((int *) rec_bits)[attsToKeep[i] + 1]; 
+			totSpace += ((int *) rec_bits)[attsToKeep[i] + 2] - ((int *) rec_bits)[attsToKeep[i] + 1];
 		}
 	}
 
@@ -260,7 +260,7 @@ void Record :: MergeRecords (Record& left, Record& right,
 			numAttsNow = numAttsRight;
 			rec_bits = right.bits;
 		}
-		
+
 		// this is the length (in bytes) of the current attribute
 		int attLen;
 
@@ -275,7 +275,7 @@ void Record :: MergeRecords (Record& left, Record& right,
 		}
 
 		// set the start position of this field
-		((int *) bits)[i + 1] = curPos;	
+		((int *) bits)[i + 1] = curPos;
 
 		// and copy over the bits
 		memmove (&(bits[curPos]), &(rec_bits[((int *) rec_bits)[attsToKeep[i] + 1]]), attLen);
@@ -423,7 +423,7 @@ ostream& Record :: print(ostream& _os, Schema& mySchema) {
 		else if (atts[i].type == String) {
 			char *myString = (char *) &(bits[pointer]);
 			_os << myString;
-		} 
+		}
 
 		// print out a comma as needed to make things pretty
 		if (i != n - 1) {

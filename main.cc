@@ -378,10 +378,10 @@ int main () {
 
 
 	cout << queryTree << endl;
-
-    /*DBFile db;
-    string file = "heapTables/region.heap";
-    string t = "region";
+		/*
+    DBFile db;
+    string file = "heapTables/nation.heap";
+    string t = "nation";
     db.Open(&file[0]);
 		//db.MoveFirst();
 
@@ -394,7 +394,7 @@ int main () {
 
     int i = 0;
     while (db.GetNext(rec)) {
-        if (i != 0) {
+        if (i > 0) {
             rec.print(cout, sch);
             cout << endl;
         }

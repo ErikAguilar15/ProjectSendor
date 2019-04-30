@@ -83,20 +83,20 @@ void DBFile::AppendRecord (Record& rec) {
 
 int DBFile::GetNext (Record& rec) {
 	//MoveFirst();
-	if (page.GetFirst(rec) == 0) {
-		if (file.GetLength() == currentPage) {
-			//cout << file.GetLength() << endl;
-			//cout << currentPage << endl;
+	int check = page.GetFirst(rec);
+	if(check){
+		//success
+		return 0;
+	}else{
+		//Check if you've reached the end of the file
+		if(currentPage == file.GetLength()){
+			return -1;
+		}else{
+			//Move onto the next page
+			file.GetPage(page,currentPage++);
+			//Get the first record of the page
+			check = page.GetFirst(rec);
 			return 0;
 		}
-		if (file.GetPage(page, currentPage) == -1) {
-			return 0;
-		}
-		//cout << currentPage << endl;
-		currentPage++;
 	}
-
-	//cout << currentPage << endl;
-
-	return 1;
 }

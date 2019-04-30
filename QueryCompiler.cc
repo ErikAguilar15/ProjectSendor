@@ -28,19 +28,19 @@ RelationalOp* getRelationalOperator(string tableName, vector<Scan*>allTableScans
 	}
 	for (int i = 0; i < allTableScans.size(); i++) {
 		//cout << tableName.compare(allTableScans[i]->getTableName()) << endl;
-		if (tableName == allTableScans[i]->getTableName()) { 
+		if (tableName == allTableScans[i]->getTableName()) {
 			//cout << allTableScans[i]->getSchema() << endl;
 			return allTableScans[i];
 		}
 	}
-	
+
 }
 
 RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableScans, vector<Select*>allSelects, AndList* _predicate) {
 
 	RelationalOp* leftChild;
 	RelationalOp* rightChild;
-	
+
 	if (root->leftChild != NULL) {
 		leftChild = postOrderTraversal(root->leftChild, allTableScans, allSelects, _predicate);
 	}
@@ -48,7 +48,7 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		rightChild = postOrderTraversal(root->rightChild, allTableScans, allSelects, _predicate);
 	}
 	//cout << "CURRENT NODE ID: " << root->id << endl;
-	
+
 
 
 	if (root->tables.size() == 1) {
@@ -98,16 +98,16 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		tableCNF.ExtractCNF(*_predicate, leftSchema, rightSchema);
 
 		Join *joinedStuff = new Join(leftSchema, rightSchema, outSchema, tableCNF, leftChild, rightChild);
-	
+
 		return joinedStuff;
 
 	}
-	
+
 	//leftSchema = getTableSchema(root->leftChild->tables[0]);
-	
-	//Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut, 
+
+	//Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	//CNF& _predicate, RelationalOp* _left, RelationalOp* _right);
-	
+
 }
 
 void preOrderTraversal(RelationalOp* root, int count) {
@@ -120,7 +120,7 @@ void preOrderTraversal(RelationalOp* root, int count) {
 	}
 
 	Join* joinCast = dynamic_cast<Join*>(root);
-	
+
 
 	Select* selectCast = dynamic_cast<Select*>(root);
 
@@ -167,8 +167,8 @@ void preOrderTraversal(RelationalOp* root, int count) {
 	else if (writeOutCast) {
 		preOrderTraversal(writeOutCast->getProducer(), count + 1);
 	}
-	
-	
+
+
 }
 
 string QueryCompiler::getPredicateTable(string _predicateValue) {
@@ -228,12 +228,12 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		DBFile dataFile = DBFile();
 
 		catalog->GetSchema(tableName, tableSchema);
-        
-        string file;
-        catalog->GetDataFile(tableName, file);
-        dataFile.Open(&file[0]);
-        dataFile.MoveFirst();
-		
+
+    string file;
+    catalog->GetDataFile(tableName, file);
+    dataFile.Open(&file[0]);
+    dataFile.MoveFirst();
+
 
 		Scan *tableScan = new Scan(tableSchema, dataFile, tableName);
 
@@ -245,7 +245,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 		int CNFValues;
 		CNFValues = tableCNF.numAnds;
-		
+
 		if (CNFValues != 0) {
 			Select *selectTables = new Select(tableSchema, tableCNF, tableRecord, tableScan, tableName);
 			allSelects.push_back(selectTables);
@@ -253,7 +253,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		else {
 			allTableScans.push_back(tableScan);
 		}
-		
+
 		tempTables = tempTables->next;
 	}
 
@@ -263,20 +263,20 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// create join operators based on the optimal order computed by the optimizer
 	// - Traverse through the tree, and for each node make a Join RelOp. -
 	// - Don't do this for the inital nodes (tables size of 1), since they are not joins, they are scans -
-	
+
 	RelationalOp* rootJoinRelationalOp;
 
 	rootJoinRelationalOp = postOrderTraversal(root,allTableScans, allSelects, _predicate);
-	
+
 	// create the remaining operators based on the query
 
 	// - Project -
 	Join* joinCast = dynamic_cast<Join*>(rootJoinRelationalOp);
 	Select* selectCast = dynamic_cast<Select*>(rootJoinRelationalOp);
 	Scan* scanCast = dynamic_cast<Scan*>(rootJoinRelationalOp);
-	
+
 	Schema schemaIn;
-	
+
 	if (joinCast) {
 		schemaIn = joinCast->getSchemaOut();
 	}
@@ -286,7 +286,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	else if (scanCast) {
 		schemaIn = scanCast->getSchema();
 	}
-	
+
 
 	struct NameList* tempAttsToSelect;
 	tempAttsToSelect = _attsToSelect;
@@ -298,7 +298,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	vector<string> attributes;
 	vector<string> attributeTypes;
 	vector<unsigned int> distincts;
-	
+
 	myAttributeInputs = schemaIn.GetAtts();
 
 	while (tempFuncAtts != NULL) {
@@ -334,10 +334,10 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 				if (tempFuncAtts->right->leftOperand->value == myAttributeInputs[i].name) {
 					attributeName2 = myAttributeInputs[i].name;
 					attributeType2 = convertType(myAttributeInputs[i].type);
-				
+
 					found2 = true;
 				}
-				
+
 			}
 			if (found && found2) {
 				attributes.push_back(attributeName1 + code + attributeName2);
@@ -354,7 +354,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 					}
 					attributeTypes.push_back(attributeTypeToPushBack);
 				}
-				
+
 			}
 			tempFuncAtts = tempFuncAtts->right->right;
 
@@ -390,7 +390,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		}
 
 		tempAttsToSelect = tempAttsToSelect->next;
-	
+
 	}
 
 	int numAttsInput;
@@ -406,6 +406,32 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// - Project -
 
 	if (_groupingAtts == NULL && _finalFunction == NULL) {
+		vector<int> keep;
+		vector<int> rkeep;
+		vector<Attribute> attsList = schemaIn.GetAtts();
+		NameList* tempList = _attsToSelect;
+		int counter = 0;
+
+		while(tempList!= NULL) {
+			for (int i = 0; i < attsList.size(); i++) {
+				if (attsList[i].name == tempList->name) {
+					cout << attsList[i].name << " this issss " << i << endl;
+					keep.push_back(i);
+					counter++;
+				}
+			}
+			tempList = tempList->next;
+		}
+
+		int size = keep.size();
+		keepMe = new int[size];
+		for (int i = 0; i < size; i++) {
+			keepMe[i] = keep[size - 1 - i];
+			cout << keepMe[i] << " doing keepme with " << attsList[i].name<< endl;
+			rkeep.push_back(keepMe[i]);
+		}
+
+		schemaOut.Project(rkeep);
 		Project *projectTable = new Project(schemaIn, schemaOut, numAttsInput, numAttsOutput, keepMe, rootJoinRelationalOp);
 		secondLastRelOp = projectTable;
 	}
@@ -465,7 +491,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	}
 
 	// connect everything in the query execution tree and return
-    
+
     rootJoinRelationalOp = writeOutRelOp;
     _queryTree.SetRoot(*rootJoinRelationalOp);
 

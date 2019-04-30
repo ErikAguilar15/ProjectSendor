@@ -24,8 +24,17 @@ bool Scan::GetNext(Record& _record){
 
 	cout << "Run Scan: GETNEXT" << endl;
 	//file.MoveFirst();
+	file.GetNext(_record);
 	int check = file.GetNext(_record);
-	//cout << check << endl;
+	cout << "SCAN check value: " << check << endl;
+
+	//Test for printing records
+	/*
+	while (file.GetNext(_record)) {
+					_record.print(cout, schema);
+					cout << endl;
+	}*/
+
 	if(check == 0){
 		return true;
 	} else return false;
@@ -60,9 +69,18 @@ Select::~Select() {
 bool Select::GetNext(Record& _record){
 
 	cout << "Run Select: GETNEXT" << endl;
-	while (producer->GetNext(_record)) {
-		if (predicate.Run(_record, constants)) {
-			return true;
+	int check = producer->GetNext(_record);
+	//producer->print(cout);
+	cout << "SELECT check value: " << check << endl;
+	while (true) {
+		if (!check) {
+			return false;
+		}
+		else {
+			check = predicate.Run(_record, constants);
+			if (check) {
+				return true;
+			}
 		}
 	}
 
@@ -108,7 +126,16 @@ Project::~Project() {
 bool Project::GetNext(Record& _record){
 
 	cout << "Run Project: GETNEXT" << endl;
-	if (producer->GetNext(_record)) {
+	int check = producer->GetNext(_record);
+	//producer->print(cout);
+
+	cout << "PROJECT check value: " << check << endl;
+
+	for (int i = 0; i < numAttsOutput; i++) {
+		cout << "check keepme indexes " << keepMe[i] << endl;
+	}
+	if (check) {
+		//fix bottom line, look at keepme
 		_record.Project(keepMe, numAttsOutput, numAttsInput);
 		return true;
 	} else return false;
@@ -284,8 +311,12 @@ WriteOut::~WriteOut() {
 bool WriteOut::GetNext(Record& _record){
 
 	cout << "Run WriteOut: GETNEXT" << endl;
+	//producer->print(cout);
 	int check = producer->GetNext(_record);
+	cout << "WRITEOUT check value: " << check << endl;
 
+	_record.print(cout, schema);
+	cout << endl;
 	if (check) {
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;

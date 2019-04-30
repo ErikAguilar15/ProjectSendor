@@ -22,6 +22,8 @@ private:
 	Catalog* catalog;
 	QueryOptimizer* optimizer;
 
+	vector<RelationalOp*> all;
+
 public:
 	QueryCompiler(Catalog& _catalog, QueryOptimizer& _optimizer);
 	virtual ~QueryCompiler();

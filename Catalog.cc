@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <ctype.h>
-#include <locale>  
+#include <locale>
 
 #include "Catalog.h"
 #include "EfficientMap.h"
@@ -12,7 +12,7 @@ using namespace std;
 
 void Catalog::print_error_message() {
 	cout << sqlite3_errmsg(db) << endl;
-	
+
 }
 
 void Catalog::check_query(string query) {
@@ -53,7 +53,7 @@ void Catalog::get_data_from_meta_tables() {
 		const char*t_name = reinterpret_cast<const char *>(sqlite3_column_text(statement, 0));
 		int t_number_of_tuples = sqlite3_column_int(statement, 1);
 		const char*t_datafile_location = reinterpret_cast<const char *>(sqlite3_column_text(statement, 2));
-		
+
 		//data in the specified format Name| number of tuples | datefile location
 		data_to_push_into_map.set_name(t_name);
 		data_to_push_into_map.set_number_of_tuples(t_number_of_tuples);
@@ -64,9 +64,9 @@ void Catalog::get_data_from_meta_tables() {
 
 		tables.Insert(data_key, data_to_push_into_map);
 		rc = sqlite3_step(statement);
-		
+
 	}
-	
+
 	rc = sqlite3_exec(db, "END TRANSACTION", 0, 0, &zErrMsg);
 	rc = sqlite3_reset(statement);
 	rc = sqlite3_finalize(statement);
@@ -75,7 +75,7 @@ void Catalog::get_data_from_meta_tables() {
 
 void Catalog::get_data_from_meta_attributes() {
 	//getting data from MetaTables
-	string sql = "SELECT * FROM meta_attributes";
+	string sql = "SELECT * FROM meta_attributes ORDER BY a_index";
 	check_query(sql);
 
 	rc = sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
@@ -83,7 +83,7 @@ void Catalog::get_data_from_meta_attributes() {
 	rc = sqlite3_step(statement);
 
 	while (rc != SQLITE_DONE) {
-		
+
 		vector<string> attributes;
 		vector<string> attribute_types;
 		vector<unsigned int> number_of_distinct_values;
@@ -92,14 +92,14 @@ void Catalog::get_data_from_meta_attributes() {
 
 		const char*a_name = reinterpret_cast<const char *>(sqlite3_column_text(statement, 1));
 		attributes.push_back(a_name);
-		
+
 		const char*a_type = reinterpret_cast<const char*>(sqlite3_column_text(statement, 2));
 		attribute_types.push_back(a_type);
-		
+
 		int a_number_of_distinct_values = reinterpret_cast<int>(sqlite3_column_int(statement, 3));
 		number_of_distinct_values.push_back(a_number_of_distinct_values);
 
-	
+
 		rc = sqlite3_step(statement);
 
 		if (tables.IsThere(t_name)) {
@@ -107,16 +107,16 @@ void Catalog::get_data_from_meta_attributes() {
 			//Schema currentSchema = table_for_schema.get_Schema();
 			Schema to_push(attributes, attribute_types , number_of_distinct_values);
 			table_for_schema.set_Schema(to_push);
-			
+
 		}
 
-		
+
 		attributes.clear();
 		attribute_types.clear();
 		number_of_distinct_values.clear();
 	}
 
-	
+
 	rc = sqlite3_exec(db, "END TRANSACTION", 0, 0, &zErrMsg);
 	rc = sqlite3_reset(statement);
 	rc = sqlite3_finalize(statement);
@@ -129,7 +129,7 @@ Catalog::Catalog(string& _fileName) {
 	open_database(file_name);
 
 	get_data_from_meta_tables();
-		
+
 	get_data_from_meta_attributes();
 
 	close_database();
@@ -173,7 +173,7 @@ bool Catalog::Save() {
 	open_database(file_name);
 
 	tables.MoveToStart();
-	
+
 	cout << "-----------------Begin Saving---------------------------------------------------------------------------";
 	cout << endl;
 
@@ -181,7 +181,7 @@ bool Catalog::Save() {
 	while (!tables.AtEnd()) {
 		string sql = "INSERT INTO meta_tables(t_name, t_number_of_tuples, t_datafile_location) VALUES (?,?,?);";
 		check_query(sql);
-		
+
 		rc = sqlite3_bind_text(statement, 1, tables.CurrentData().get_name().c_str(), -1, NULL);
 		rc = sqlite3_bind_int(statement, 2, tables.CurrentData().get_number_of_tuples());
 		rc = sqlite3_bind_text(statement, 3, tables.CurrentData().get_data_path().c_str(), -1, NULL);
@@ -222,7 +222,7 @@ bool Catalog::GetNoTuples(string& _table, unsigned int& _noTuples) {
 		_noTuples = tables.Find(tableKey).get_number_of_tuples();
 		return true;
 	}
-	
+
 }
 
 void Catalog::SetNoTuples(string& _table, unsigned int& _noTuples) {
@@ -234,9 +234,9 @@ void Catalog::SetNoTuples(string& _table, unsigned int& _noTuples) {
 	}
 	else {
 		tables.Find(tableKey).set_number_of_tuples(_noTuples);
-		
+
 	}
-	
+
 }
 
 bool Catalog::GetDataFile(string& _table, string& _path) {
@@ -249,7 +249,7 @@ bool Catalog::GetDataFile(string& _table, string& _path) {
 
 		_path = tables.Find(tableKey).get_data_path();
 		return true;
-	
+
 }
 
 void Catalog::SetDataFile(string& _table, string& _path) {
@@ -259,9 +259,9 @@ void Catalog::SetDataFile(string& _table, string& _path) {
 		cout << "Error: " << _table << " not found!" << endl;
 		return;
 	}
-	
+
 		tables.Find(tableKey).set_data_path(_path);
-	
+
 }
 
 bool Catalog::GetNoDistinct(string& _table, string& _attribute,
@@ -272,11 +272,11 @@ bool Catalog::GetNoDistinct(string& _table, string& _attribute,
 		cout << "Error: " << _table << " not found!" << endl;
 		return false;
 	}
-	
+
 		_noDistinct = tables.Find(tableKey).get_Schema().GetDistincts(_attribute);
-		
+
 		return true;
-	
+
 }
 
 void Catalog::SetNoDistinct(string& _table, string& _attribute,
@@ -290,7 +290,7 @@ void Catalog::SetNoDistinct(string& _table, string& _attribute,
 	else {
 		int findAttributeIndex = tables.Find(tableKey).get_Schema().Index(_attribute);
 		tables.Find(tableKey).get_Schema().GetAtts()[findAttributeIndex].noDistinct = _noDistinct;
-	
+
 	}
 }
 
@@ -304,7 +304,7 @@ void Catalog::GetTables(vector<string>& _tables) {
 }
 
 bool Catalog::GetAttributes(string& _table, vector<string>& _attributes) {
-	
+
 	KeyString tableKey(_table);
 
 	if (tables.IsThere(tableKey) == 0) {
@@ -321,7 +321,7 @@ bool Catalog::GetAttributes(string& _table, vector<string>& _attributes) {
 }
 
 bool Catalog::GetSchema(string& _table, Schema& _schema) {
-	
+
 	KeyString tableKey(_table);
 
 	if (tables.IsThere(tableKey) == 0) {
@@ -332,12 +332,12 @@ bool Catalog::GetSchema(string& _table, Schema& _schema) {
 		_schema = tables.Find(tableKey).get_Schema();
 		return true;
 	}
-	
+
 }
 
 bool Catalog::CreateTable(string& _table, vector<string>& _attributes,
 	vector<string>& _attributeTypes) {
-	
+
 	KeyString table_key(_table);
 	vector<unsigned int> number_of_distinct_values;
 	int number_of_tuples = 0;
@@ -349,7 +349,7 @@ bool Catalog::CreateTable(string& _table, vector<string>& _attributes,
 		cout << "Sorry the table '" << _table <<  "' already Exists" << endl;
 		return false;
 	}
-	
+
 		for (int i = 0; i < _attributes.size(); i++) {
 			number_of_distinct_values.push_back(0);
 		}
@@ -369,13 +369,13 @@ bool Catalog::CreateTable(string& _table, vector<string>& _attributes,
 		ofstream createNewFile;
 		createNewFile.open(dataFileLocation.c_str(), ios::binary);
 		if (createNewFile.is_open())
-		{	
+		{
 			cout << "File was opened" << endl;
 			createNewFile.close();
 		}
-	
+
 		return true;
-	
+
 }
 
 bool Catalog::DropTable(string& _table) {
@@ -384,14 +384,14 @@ bool Catalog::DropTable(string& _table) {
 		cout << "Sorry the table '" << _table << "' does not Exist" << endl;
 		return false;
 	}
-	
+
 		KeyString removed_key;
 		TableInfo table_data;
 
 		tables.Remove(table_key, removed_key, table_data);
 
 		return true;
-	
+
 
 }
 
@@ -405,7 +405,7 @@ ostream& operator<<(ostream& _os, Catalog& _c) {
 		cout << "Table Name: " << _c.tables.CurrentData().get_name() << "\t";
 		cout << "Number of Tuples: " << _c.tables.CurrentData().get_number_of_tuples() << "\t";
 		cout << "Datafile Location: " << _c.tables.CurrentData().get_data_path() << endl;
-		
+
 
 		vector<Attribute> attributes = _c.tables.CurrentData().get_Schema().GetAtts();
 		if (attributes.empty()) {
