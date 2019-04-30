@@ -7,6 +7,8 @@
 #include "Comparison.h"
 #include "Function.h"
 #include "RelOp.h"
+#include <iostream>
+#include <vector>
 
 using namespace std;
 
