@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include <fstream>
+#include <unordered_set>
 
 #include "Schema.h"
 #include "Record.h"
 #include "DBFile.h"
 #include "Function.h"
 #include "Comparison.h"
+#include "EfficientMap.cc"
+#include "Keyify.h"
 
 using namespace std;
 
@@ -170,6 +173,9 @@ private:
 	// operator generating data
 	RelationalOp* producer;
 
+	//Hash table for unordered set
+	unordered_set<string> hashTable;
+
 public:
 	DuplicateRemoval(Schema& _schema, RelationalOp* _producer);
 	virtual ~DuplicateRemoval();
@@ -193,6 +199,8 @@ private:
 
 	// operator generating data
 	RelationalOp* producer;
+
+	int recordSent;
 
 public:
 	Sum(Schema& _schemaIn, Schema& _schemaOut, Function& _compute,
@@ -223,6 +231,8 @@ private:
 
 	// operator generating data
 	RelationalOp* producer;
+
+	EfficientMap<KeyString, KeyDouble> groups;
 
 public:
 	GroupBy(Schema& _schemaIn, Schema& _schemaOut, OrderMaker& _groupingAtts,

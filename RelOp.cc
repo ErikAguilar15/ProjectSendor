@@ -1,5 +1,7 @@
 #include <iostream>
+#include <sstream>
 #include "RelOp.h"
+#include "EfficientMap.h"
 
 using namespace std;
 
@@ -189,6 +191,17 @@ DuplicateRemoval::~DuplicateRemoval() {
 }
 
 bool DuplicateRemoval::GetNext(Record& _record){
+	cout << "Run Duplicate Removal: GETNEXT" << endl;
+	while(producer->GetNext(_record)) {
+		stringstream ss;
+		_record.print(ss, schema);
+		unordered_set<string>::iterator it = hashTable.find(ss.str());
+		if (it == hashTable.end()) {
+			hashTable.insert(ss.str());
+			return true;
+		}
+	}
+	return false;
 
 }
 Schema& DuplicateRemoval::getSchema() {
@@ -215,6 +228,33 @@ Sum::~Sum() {
 }
 
 bool Sum::GetNext(Record& _record){
+
+	cout << "Run Sum: GETNEXT" << endl;
+	if (recordSent) return false;
+	int intSum = 0;
+	double doubleSum = 0;
+	while(producer->GetNext(_record)) {
+		int intResult = 0;
+		double doubleResult = 0;
+		Type t = compute.Apply(_record, intResult, doubleResult);
+		if (t == Integer)	intSum+= intResult;
+		if (t == Float)		doubleSum+= doubleResult;
+	}
+
+	double val = doubleSum + (double)intSum;
+	char* recSpace = new char[PAGE_SIZE];
+  int currentPosInRec = sizeof (int) * (2);
+	((int *) recSpace)[1] = currentPosInRec;
+	*((double *) &(recSpace[currentPosInRec])) = val;
+	currentPosInRec += sizeof (double);
+	((int *) recSpace)[0] = currentPosInRec;
+
+	Record sumRecord;
+	sumRecord.CopyBits( recSpace, currentPosInRec );
+	delete [] recSpace;
+	_record = sumRecord;
+	recordSent = 1;
+	return true;
 
 }
 Schema& Sum::getSchemaIn() {
@@ -249,7 +289,68 @@ GroupBy::~GroupBy() {
 
 bool GroupBy::GetNext(Record& _record){
 
-}
+	cout << "Run GroupBy: GETNEXT" << endl;
+	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
+
+	int i = 0;
+	int runningIntSum = 0;
+	int runningDoubleSum = 0;
+	int iterator = 0;
+	int vectorIterator = 1;
+
+	vector<Attribute> attributeStorage;
+	vector<string> attributeNames;
+	Schema copy = schemaOut;
+	attributeStorage = copy.GetAtts();
+	for(i = 1; i < copy.GetNumAtts(); i++){
+		attributeNames.push_back(attributeStorage[i].name);
+	}
+	while(producer->GetNext(_record)){
+
+		KeyString name = attributeStorage[vectorIterator].name;
+		KeyDouble value;
+		int point = ((int*) _record.GetBits())[iterator + 1];
+		if(groups.IsThere(name)){
+			if(attributeStorage[vectorIterator].type == Integer){
+				int *currentInt = (int*) &(_record.GetBits()[point]);
+				runningIntSum += *currentInt;
+				value = groups.Find(name);
+				groups.Remove(name, name, value);
+				value = runningIntSum;
+				groups.Insert(name, value);
+			}
+			else if (attributeStorage[vectorIterator].type == Float){
+				double *currentDouble = (double*) &(_record.GetBits()[point]);
+				runningDoubleSum += *currentDouble;
+				value = groups.Find(name);
+				groups.Remove(name, name, value);
+				value = runningDoubleSum;
+				groups.Insert(name, value);
+			}
+		} else {
+			cout << "Not Found" << endl;
+			if(attributeStorage[vectorIterator].type == Integer){
+				int *currentInt = (int*) &(_record.GetBits()[point]);
+				value = *currentInt;
+				groups.Insert(name, value);
+			}
+			else if(attributeStorage[vectorIterator].type == Float){
+				double *currentDouble = (double*) &(_record.GetBits()[point]);
+				value = *currentDouble;
+				groups.Insert(name, value);
+			}
+		}
+		vectorIterator++;
+		return true;
+	}
+		groups.MoveToStart();
+		for(int i = 0; i < groups.Length(); i++){
+			cout << groups.CurrentData() << endl;
+			groups.Advance();
+		}
+		return false;
+	}
+
 Schema& GroupBy::getSchemaIn() {
 	return schemaIn;
 }
