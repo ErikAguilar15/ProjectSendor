@@ -278,7 +278,6 @@ public:
 	Record record;
 	int i = 0;
 	while(root->GetNext(record)){
-        //cout << "hi" << endl;
 	}
 	}
 	void SetRoot(RelationalOp& _root) {root = &_root;}
