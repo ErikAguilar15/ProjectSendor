@@ -2,6 +2,7 @@
 #include <sstream>
 #include "RelOp.h"
 #include "EfficientMap.h"
+#include <map>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ bool Scan::GetNext(Record& _record){
 
 	cout << "Run Scan: GETNEXT" << endl;
 	//file.MoveFirst();
-	file.GetNext(_record);
+	//file.GetNext(_record);
 	int check = file.GetNext(_record);
 	cout << "SCAN check value: " << check << endl;
 
@@ -74,6 +75,7 @@ bool Select::GetNext(Record& _record){
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 	cout << "SELECT check value: " << check << endl;
+	//while producer still has records, compare constants to predicates
 	while (true) {
 		if (!check) {
 			return false;
@@ -136,6 +138,7 @@ bool Project::GetNext(Record& _record){
 	for (int i = 0; i < numAttsOutput; i++) {
 		cout << "check keepme indexes " << keepMe[i] << endl;
 	}
+	//Get producers record and project until there are no more
 	if (check) {
 		//fix bottom line, look at keepme
 		_record.Project(keepMe, numAttsOutput, numAttsInput);
@@ -219,16 +222,43 @@ DuplicateRemoval::~DuplicateRemoval() {
 
 bool DuplicateRemoval::GetNext(Record& _record){
 	cout << "Run Duplicate Removal: GETNEXT" << endl;
-	while(producer->GetNext(_record)) {
-		stringstream ss;
-		_record.print(ss, schema);
-		unordered_set<string>::iterator it = hashTable.find(ss.str());
-		if (it == hashTable.end()) {
-			hashTable.insert(ss.str());
-			return true;
+	//Key to hashtable, string with all record data, and attributes from the schema
+	KeyString key;
+	stringstream ss;
+	vector<Attribute> attrs = schema.GetAtts();
+	int check = producer->GetNext(_record);
+	//While there are records, check whether record and then attribute is in hash
+	while(check) {
+		for (int i = 0; i < schema.GetNumAtts(); i++) {
+				//create pointer to current record
+				int p = ((int *)_record.GetBits())[i + 1];
+				//INTEGER (Take pointer value and insert into stringstream)
+				if (attrs[i].type == Integer) {
+					ss << attrs[i].name << " "<< *(int *) &(_record.GetBits()[p]);
+				}
+				//DOUBLE/FLOAT (Take pointer value and insert into stringstream)
+				else if (attrs[i].type == Float) {
+					ss << attrs[i].name << " " << *(double *) &(_record.GetBits()[p]);
+
+				}
+				//STRING (Take pointer value and insert into stringstream)
+				else if (attrs[i].type == String) {
+					string charToString = (char *) &(_record.GetBits()[p]);
+					ss << attrs[i].name << " " << charToString;
+				}
+				//Set hashtable key to stringstream
+				key = ss.str();
+
+
+			}
+			//If not already in has, perform insert in EfficientMap
+			if (!map.IsThere(key))
+			{
+				map.Insert(key, key);
+				return true;
+			}
 		}
-	}
-	return false;
+		return false;
 
 }
 Schema& DuplicateRemoval::getSchema() {

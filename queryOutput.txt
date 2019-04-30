@@ -1,2 +1,0 @@
-{n_comment: , n_name: ARGENTINA, n_nationkey: 1713400929
-{n_comment: , n_name: CANADA, n_nationkey: 544432485
