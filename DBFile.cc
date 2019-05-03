@@ -10,6 +10,7 @@ using namespace std;
 
 
 DBFile::DBFile () : fileName("") {
+	currentPage = 0;
 }
 
 DBFile::~DBFile () {
@@ -67,11 +68,12 @@ int DBFile::Close () {
 
 void DBFile::MoveFirst () {
 	currentPage = 0;
-	file.GetPage(page, currentPage);
+	//file.GetPage(page, currentPage);
+	page.EmptyItOut();
 }
 
 void DBFile::AppendRecord (Record& rec) {
-	MoveFirst();
+	//MoveFirst();
 	if (!page.Append(rec)){
 		file.AddPage(page, currentPage++);
 		//cout << file.GetLength() << endl;
