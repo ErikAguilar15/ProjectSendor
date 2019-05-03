@@ -1,2 +1,5 @@
-{n_comment: , n_name: ARGENTINA, n_nationkey: 1713400929
-{n_comment: , n_name: CANADA, n_nationkey: 544432485
+{n_nationkey: 1162300481, n_name: 
+{n_nationkey: 1229476933, n_name: 
+{n_nationkey: 1498301771, n_name: 
+{n_nationkey: 1330794317, n_name: 
+{n_nationkey: 1096437581, n_name: 

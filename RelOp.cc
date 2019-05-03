@@ -26,7 +26,7 @@ bool Scan::GetNext(Record& _record){
 
 	cout << "Run Scan: GETNEXT" << endl;
 	//file.MoveFirst();
-	file.GetNext(_record);
+	//file.GetNext(_record);
 	int check = file.GetNext(_record);
 	cout << "SCAN check value: " << check << endl;
 
@@ -71,23 +71,19 @@ Select::~Select() {
 bool Select::GetNext(Record& _record){
 
 	cout << "Run Select: GETNEXT" << endl;
-	int check = producer->GetNext(_record);
-	//producer->print(cout);
-	cout << "SELECT check value: " << check << endl;
+
 	while (true) {
-		if (!check) {
-			return false;
-		}
+		int check = producer->GetNext(_record);
+		//producer->print(cout);
+		cout << "SELECT check value: " << check << endl;
+		if (!check) return false;
 		else {
-			check = predicate.Run(_record, constants);
-			if (check) {
-				return true;
-			}
+				check = predicate.Run(_record, constants);
+				if (check) return true;
 		}
 	}
 
 	return false;
-
 }
 string Select::getTableName() {
 	return tableName;
@@ -406,27 +402,22 @@ WriteOut::WriteOut(Schema& _schema, string& _outFile, RelationalOp* _producer) {
 	outFileStream.open(outFile);
 }
 WriteOut::~WriteOut() {
-
+	outFileStream.close();
 }
 
 bool WriteOut::GetNext(Record& _record){
-
 	cout << "Run WriteOut: GETNEXT" << endl;
 	//producer->print(cout);
-	int check = producer->GetNext(_record);
-	cout << "WRITEOUT check value: " << check << endl;
+	while (producer->GetNext(_record)) {
+		cout << "WRITEOUT" << endl;
 
-	_record.print(cout, schema);
-	cout << endl;
-	if (check) {
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;
-		return true;
+
+		_record.print(cout, schema);
+		cout << endl;
 	}
-	else {
-		outFileStream.close();
-		return false;
-	}
+
 	/*bool writeout = producer->GetNext(_record);
 	if (!writeout) {
 		outFileStream.close();
@@ -436,6 +427,7 @@ bool WriteOut::GetNext(Record& _record){
 	outFileStream<<endl;
 	return writeout;*/
 
+	return true;
 }
 Schema & WriteOut::getSchema() {
 	return schema;

@@ -83,6 +83,7 @@ void DBFile::AppendRecord (Record& rec) {
 
 int DBFile::GetNext (Record& rec) {
 	//MoveFirst();
+	cout << "running getnext on page " << currentPage << endl;
 	int check = page.GetFirst(rec);
 	if(check){
 		//success
