@@ -409,31 +409,25 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 	if (_groupingAtts == NULL && _finalFunction == NULL) {
 		vector<int> keep;
-		vector<int> rkeep;
-		vector<Attribute> attsList = schemaIn.GetAtts();
-		NameList* tempList = _attsToSelect;
-		int counter = 0;
 
+		NameList* tempList = _attsToSelect;
 		while(tempList!= NULL) {
-			for (int i = 0; i < attsList.size(); i++) {
-				if (attsList[i].name == tempList->name) {
-					cout << attsList[i].name << " this issss " << i << endl;
-					keep.push_back(i);
-					counter++;
-				}
-			}
+			string s = tempList->name;
+			keep.push_back(schemaIn.Index(s));
 			tempList = tempList->next;
 		}
+
 
 		int size = keep.size();
 		keepMe = new int[size];
 		for (int i = 0; i < size; i++) {
-			keepMe[i] = keep[size - 1 - i];
-			cout << keepMe[i] << " doing keepme with " << attsList[i].name<< endl;
-			rkeep.push_back(keepMe[i]);
+			keepMe[i] = keep[size-i-1];
+			cout << keepMe[i] << " doing keepme" << endl;
 		}
 
-		schemaOut.Project(rkeep);
+		schemaOut = schemaIn;
+		schemaOut.Project(keep);
+		cout << schemaOut << endl;
 		Project *projectTable = new Project(schemaIn, schemaOut, numAttsInput, numAttsOutput, keepMe, rootJoinRelationalOp);
 		secondLastRelOp = projectTable;
 	}

@@ -284,11 +284,9 @@ public:
 	virtual ~QueryExecutionTree() {}
 
 	void ExecuteQuery() {
-	cout << "Executing Query" << endl;
-	Record record;
-	int i = 0;
-	while(root->GetNext(record)){
-	}
+		cout << "Executing Query" << endl;
+		Record record;
+		root->GetNext(record);
 	}
 	void SetRoot(RelationalOp& _root) {root = &_root;}
 
