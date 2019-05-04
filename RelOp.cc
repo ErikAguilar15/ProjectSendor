@@ -2,7 +2,6 @@
 #include <sstream>
 #include "RelOp.h"
 #include "EfficientMap.h"
-#include <map>
 
 using namespace std;
 
@@ -72,24 +71,19 @@ Select::~Select() {
 bool Select::GetNext(Record& _record){
 
 	cout << "Run Select: GETNEXT" << endl;
-	int check = producer->GetNext(_record);
-	//producer->print(cout);
-	cout << "SELECT check value: " << check << endl;
-	//while producer still has records, compare constants to predicates
+
 	while (true) {
-		if (!check) {
-			return false;
-		}
+		int check = producer->GetNext(_record);
+		//producer->print(cout);
+		cout << "SELECT check value: " << check << endl;
+		if (!check) return false;
 		else {
-			check = predicate.Run(_record, constants);
-			if (check) {
-				return true;
-			}
+				check = predicate.Run(_record, constants);
+				if (check) return true;
 		}
 	}
 
 	return false;
-
 }
 string Select::getTableName() {
 	return tableName;
@@ -138,7 +132,6 @@ bool Project::GetNext(Record& _record){
 	for (int i = 0; i < numAttsOutput; i++) {
 		cout << "check keepme indexes " << keepMe[i] << endl;
 	}
-	//Get producers record and project until there are no more
 	if (check) {
 		//fix bottom line, look at keepme
 		_record.Project(keepMe, numAttsOutput, numAttsInput);
@@ -221,45 +214,18 @@ DuplicateRemoval::~DuplicateRemoval() {
 }
 
 bool DuplicateRemoval::GetNext(Record& _record){
-	cout << "Run Duplicate Removal: GETNEXT" << endl;
-	//Key to hashtable, string with all record data, and attributes from the schema
-	KeyString key;
-	stringstream ss;
-	vector<Attribute> attrs = schema.GetAtts();
-	int check = producer->GetNext(_record);
-	//While there are records, check whether record and then attribute is in hash
-	while(check) {
-		for (int i = 0; i < schema.GetNumAtts(); i++) {
-				//create pointer to current record
-				int p = ((int *)_record.GetBits())[i + 1];
-				//INTEGER (Take pointer value and insert into stringstream)
-				if (attrs[i].type == Integer) {
-					ss << attrs[i].name << " "<< *(int *) &(_record.GetBits()[p]);
-				}
-				//DOUBLE/FLOAT (Take pointer value and insert into stringstream)
-				else if (attrs[i].type == Float) {
-					ss << attrs[i].name << " " << *(double *) &(_record.GetBits()[p]);
-
-				}
-				//STRING (Take pointer value and insert into stringstream)
-				else if (attrs[i].type == String) {
-					string charToString = (char *) &(_record.GetBits()[p]);
-					ss << attrs[i].name << " " << charToString;
-				}
-				//Set hashtable key to stringstream
-				key = ss.str();
-
-
-			}
-			//If not already in has, perform insert in EfficientMap
-			if (!map.IsThere(key))
-			{
-				map.Insert(key, key);
-				return true;
-			}
+/*	cout << "Run Duplicate Removal: GETNEXT" << endl;
+	while(producer->GetNext(_record)) {
+		stringstream ss;
+		_record.print(ss, schema);
+		unordered_set<string>::iterator it = hashTable.find(ss.str());
+		if (it == hashTable.end()) {
+			hashTable.insert(ss.str());
+			return true;
 		}
-		return false;
-
+	}
+	return false;
+*/
 }
 Schema& DuplicateRemoval::getSchema() {
 	return schema;
@@ -285,41 +251,34 @@ Sum::~Sum() {
 }
 
 bool Sum::GetNext(Record& _record){
-
+/*
 	cout << "Run Sum: GETNEXT" << endl;
-	//Need sum results (int/double) and running sums
 	if (recordSent) return false;
 	int intSum = 0;
 	double doubleSum = 0;
 	while(producer->GetNext(_record)) {
 		int intResult = 0;
 		double doubleResult = 0;
-		//check to see if record is an int or double
 		Type t = compute.Apply(_record, intResult, doubleResult);
 		if (t == Integer)	intSum+= intResult;
 		if (t == Float)		doubleSum+= doubleResult;
 	}
-	//Both types for accurate running sum
+
 	double val = doubleSum + (double)intSum;
 	char* recSpace = new char[PAGE_SIZE];
-	//Current position in record is sizeof(int) * (number of atts + 1) and number of atts = 1
   int currentPosInRec = sizeof (int) * (2);
-	//Need pointer to current attribute in the record
 	((int *) recSpace)[1] = currentPosInRec;
 	*((double *) &(recSpace[currentPosInRec])) = val;
 	currentPosInRec += sizeof (double);
-	//Need pointer past end record
 	((int *) recSpace)[0] = currentPosInRec;
 
-	//Copy bits of records
 	Record sumRecord;
 	sumRecord.CopyBits( recSpace, currentPosInRec );
-	//free memory
 	delete [] recSpace;
 	_record = sumRecord;
 	recordSent = 1;
 	return true;
-
+*/
 }
 Schema& Sum::getSchemaIn() {
 	return schemaIn;
@@ -352,34 +311,29 @@ GroupBy::~GroupBy() {
 }
 
 bool GroupBy::GetNext(Record& _record){
-
+/*
 	cout << "Run GroupBy: GETNEXT" << endl;
-	//Procecting atts & schema
 	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
 
-	//variables needed for running sum, iterators, and vector storages
 	int i = 0;
 	int runningIntSum = 0;
 	int runningDoubleSum = 0;
 	int iterator = 0;
 	int vectorIterator = 1;
+
 	vector<Attribute> attributeStorage;
 	vector<string> attributeNames;
-
-	//push back atts into storage
 	Schema copy = schemaOut;
 	attributeStorage = copy.GetAtts();
 	for(i = 1; i < copy.GetNumAtts(); i++){
 		attributeNames.push_back(attributeStorage[i].name);
 	}
-	//While records available, point to record bits
 	while(producer->GetNext(_record)){
+
 		KeyString name = attributeStorage[vectorIterator].name;
 		KeyDouble value;
 		int point = ((int*) _record.GetBits())[iterator + 1];
-		//if the name matches, means we group values
 		if(groups.IsThere(name)){
-			//INTEGER VALUES
 			if(attributeStorage[vectorIterator].type == Integer){
 				int *currentInt = (int*) &(_record.GetBits()[point]);
 				runningIntSum += *currentInt;
@@ -387,7 +341,7 @@ bool GroupBy::GetNext(Record& _record){
 				groups.Remove(name, name, value);
 				value = runningIntSum;
 				groups.Insert(name, value);
-			} //DOUBLE/FLOAT VALUES
+			}
 			else if (attributeStorage[vectorIterator].type == Float){
 				double *currentDouble = (double*) &(_record.GetBits()[point]);
 				runningDoubleSum += *currentDouble;
@@ -398,31 +352,26 @@ bool GroupBy::GetNext(Record& _record){
 			}
 		} else {
 			cout << "Not Found" << endl;
-			//If name is not found in storage, insert it
-			//INTEGER VALUES
 			if(attributeStorage[vectorIterator].type == Integer){
 				int *currentInt = (int*) &(_record.GetBits()[point]);
 				value = *currentInt;
 				groups.Insert(name, value);
 			}
-			//DOUBLE/FLOAT values
 			else if(attributeStorage[vectorIterator].type == Float){
 				double *currentDouble = (double*) &(_record.GetBits()[point]);
 				value = *currentDouble;
 				groups.Insert(name, value);
 			}
 		}
-		//Increment through records
 		vectorIterator++;
 		return true;
 	}
-	//Check through entire groupings
 		groups.MoveToStart();
 		for(int i = 0; i < groups.Length(); i++){
 			cout << groups.CurrentData() << endl;
 			groups.Advance();
 		}
-		return false;
+		return false; */
 	}
 
 Schema& GroupBy::getSchemaIn() {
@@ -453,29 +402,22 @@ WriteOut::WriteOut(Schema& _schema, string& _outFile, RelationalOp* _producer) {
 	outFileStream.open(outFile);
 }
 WriteOut::~WriteOut() {
-
+	outFileStream.close();
 }
 
 bool WriteOut::GetNext(Record& _record){
-
 	cout << "Run WriteOut: GETNEXT" << endl;
 	//producer->print(cout);
-	int check = producer->GetNext(_record);
-	cout << "WRITEOUT check value: " << check << endl;
+	while (producer->GetNext(_record)) {
+		cout << "WRITEOUT" << endl;
 
-	_record.print(cout, schema);
-	cout << endl;
-	//If there are records, writeout their schema
-	if (check) {
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;
-		return true;
+
+		_record.print(cout, schema);
+		cout << endl;
 	}
-	//No more records 
-	else {
-		outFileStream.close();
-		return false;
-	}
+
 	/*bool writeout = producer->GetNext(_record);
 	if (!writeout) {
 		outFileStream.close();
@@ -485,6 +427,7 @@ bool WriteOut::GetNext(Record& _record){
 	outFileStream<<endl;
 	return writeout;*/
 
+	return true;
 }
 Schema & WriteOut::getSchema() {
 	return schema;

@@ -1,0 +1,2 @@
+{l_suppkey: 1, l_orderkey: 48, l_partkey: 22
+{l_suppkey: 68, l_orderkey: 97, l_partkey: 71
