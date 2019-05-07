@@ -33,7 +33,7 @@ int Page :: GetFirst(Record& firstOne) {
 	// move to the first record
 	myRecs.MoveToStart ();
 
-	// make sure there is data 
+	// make sure there is data
 	if (myRecs.AtEnd()) return 0;
 
 	// and remove it
@@ -56,7 +56,7 @@ int Page :: Append (Record& addMe) {
 	myRecs.Append(addMe);
 	numRecs++;
 
-	return 1;	
+	return 1;
 }
 
 void Page :: ToBinary (char* bits) {
@@ -68,7 +68,7 @@ void Page :: ToBinary (char* bits) {
 	// and copy the records one-by-one
 	for (myRecs.MoveToStart(); !myRecs.AtEnd(); myRecs.Advance()) {
 		char* b = myRecs.Current().GetBits();
-		
+
 		// copy over the bits of the current record
 		memcpy (curPos, b, ((int *) b)[0]);
 		curPos += ((int *) b)[0];
@@ -174,7 +174,7 @@ int File :: GetPage (Page& putItHere, off_t whichPage) {
 
 	// read in the specified page
 	char* bits = new char[PAGE_SIZE];
-	
+
 	lseek (fileDescriptor, PAGE_SIZE * whichPage, SEEK_SET);
 	read (fileDescriptor, bits, PAGE_SIZE);
 	putItHere.FromBinary(bits);
@@ -197,6 +197,7 @@ void File :: AddPage (Page& addMe, off_t whichPage) {
 	lseek (fileDescriptor, PAGE_SIZE * (whichPage+1), SEEK_SET);
 	write (fileDescriptor, bits, PAGE_SIZE);
 
+	curLength++;
 	delete [] bits;
 }
 
