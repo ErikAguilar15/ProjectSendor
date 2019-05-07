@@ -24,11 +24,11 @@ Scan::~Scan() {
 
 bool Scan::GetNext(Record& _record){
 
-	cout << "Run Scan: GETNEXT" << endl;
+	//cout << "Run Scan: GETNEXT" << endl;
 	//file.MoveFirst();
 	//file.GetNext(_record);
 	int check = file.GetNext(_record);
-	cout << "SCAN check value: " << check << endl;
+	//cout << "SCAN check value: " << check << endl;
 
 	//Test for printing records
 	/*
@@ -70,12 +70,12 @@ Select::~Select() {
 
 bool Select::GetNext(Record& _record){
 
-	cout << "Run Select: GETNEXT" << endl;
+	//cout << "Run Select: GETNEXT" << endl;
 
 	while (true) {
 		int check = producer->GetNext(_record);
 		//producer->print(cout);
-		cout << "SELECT check value: " << check << endl;
+		//cout << "SELECT check value: " << check << endl;
 		if (!check) return false;
 		else {
 				check = predicate.Run(_record, constants);
@@ -123,14 +123,14 @@ Project::~Project() {
 
 bool Project::GetNext(Record& _record){
 
-	cout << "Run Project: GETNEXT" << endl;
+	//cout << "Run Project: GETNEXT" << endl;
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 
-	cout << "PROJECT check value: " << check << endl;
+	//cout << "PROJECT check value: " << check << endl;
 
 	for (int i = 0; i < numAttsOutput; i++) {
-		cout << "check keepme indexes " << keepMe[i] << endl;
+		//cout << "check keepme indexes " << keepMe[i] << endl;
 	}
 	if (check) {
 		//fix bottom line, look at keepme
@@ -214,15 +214,15 @@ DuplicateRemoval::~DuplicateRemoval() {
 }
 
 bool DuplicateRemoval::GetNext(Record& _record){
-	cout << "Run Duplicate Removal: GETNEXT" << endl;
+	//cout << "Run Duplicate Removal: GETNEXT" << endl;
 	while(producer->GetNext(_record)) {
 		stringstream ss;
 		_record.print(ss, schema);
-		unordered_set<string>::iterator it = hashTable.find(ss.str());
+		/*unordered_set<string>::iterator it = hashTable.find(ss.str());
 		if (it == hashTable.end()) {
 			hashTable.insert(ss.str());
 			return true;
-		}
+		}*/
 	}
 	return false;
 
@@ -406,10 +406,10 @@ WriteOut::~WriteOut() {
 }
 
 bool WriteOut::GetNext(Record& _record){
-	cout << "Run WriteOut: GETNEXT" << endl;
+	//cout << "Run WriteOut: GETNEXT" << endl;
 	//producer->print(cout);
 	while (producer->GetNext(_record)) {
-		cout << "WRITEOUT" << endl;
+		//cout << "WRITEOUT" << endl;
 
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;

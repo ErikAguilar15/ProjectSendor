@@ -38,7 +38,7 @@ Schema::Schema(vector<string>& _attributes,	vector<string>& _attributeTypes,
 		if (_attributeTypes[i] == "Integer" || _attributeTypes[i] == "INTEGER") a.type = Integer;
 		else if (_attributeTypes[i] == "Float" || _attributeTypes[i] == "FLOAT") a.type = Float;
 		else if (_attributeTypes[i] == "String" || _attributeTypes[i] == "STRING") a.type = String;
-		
+
 		atts.push_back(a);
 	}
 }
@@ -122,16 +122,22 @@ int Schema::RenameAtt(string& _oldName, string& _newName) {
 int Schema::Project(vector<int>& _attsToKeep) {
 	int numAttsToKeep = _attsToKeep.size();
 	int numAtts = atts.size();
-	
+
 	// too many attributes to keep
 	if (numAttsToKeep > numAtts) return -1;
 
 	vector<Attribute> copy; atts.swap(copy);
 
+	for (int i = 0; i <numAtts; i++) {
+		cout << "listing atts: " << copy[i].name << endl;
+	}
+
 	for (int i=0; i<numAttsToKeep; i++) {
-		int index = _attsToKeep[i];
+		int index = _attsToKeep[i] + numAttsToKeep; //fixed this equation to work with our project in querycompiler
+		cout << "index: " << index << endl;
 		if ((index >= 0) && (index < numAtts)) {
 			Attribute a; a = copy[index];
+			cout << "att: " << a.name << endl;
 			atts.push_back(a);
 		}
 		else {

@@ -7,6 +7,8 @@
 #include "Comparison.h"
 #include "Function.h"
 #include "RelOp.h"
+#include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -383,6 +385,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		for (int i = 0; i < myAttributeInputs.size(); i++) {
 
 			if (tempAttsToSelect->name == myAttributeInputs[i].name) {
+				cout << "listing atts for schemaout: " << tempAttsToSelect->name << endl;
 				attributes.push_back(myAttributeInputs[i].name);
 				attributeTypes.push_back(convertType(myAttributeInputs[i].type));
 				distincts.push_back(myAttributeInputs[i].noDistinct);
@@ -407,6 +410,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 	if (_groupingAtts == NULL && _finalFunction == NULL) {
 		vector<int> keep;
+		vector<int> rkeep;
 
 		NameList* tempList = _attsToSelect;
 		while(tempList!= NULL) {
@@ -420,11 +424,12 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		keepMe = new int[size];
 		for (int i = 0; i < size; i++) {
 			keepMe[i] = keep[size-i-1];
+			rkeep.push_back(keep[size-i-1]);
 			cout << keepMe[i] << " doing keepme" << endl;
 		}
 
 		schemaOut = schemaIn;
-		schemaOut.Project(keep);
+		schemaOut.Project(rkeep);
 		cout << schemaOut << endl;
 		Project *projectTable = new Project(schemaIn, schemaOut, numAttsInput, numAttsOutput, keepMe, rootJoinRelationalOp);
 		secondLastRelOp = projectTable;

@@ -378,7 +378,7 @@ int main () {
 
 
 	cout << queryTree << endl;
-		/*
+
     DBFile db;
     string file = "heapTables/nation.heap";
     string t = "nation";
@@ -399,7 +399,7 @@ int main () {
             cout << endl;
         }
         i++;
-    }*/
+    }
 	queryTree.ExecuteQuery();
 
 	return 0;

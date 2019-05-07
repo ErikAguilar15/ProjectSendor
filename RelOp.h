@@ -173,8 +173,8 @@ private:
 	// operator generating data
 	RelationalOp* producer;
 
-	//Hash table for unordered set
-	unordered_set<string> hashTable;
+	//Map for checking records 
+	EfficientMap <KeyString, KeyString> map;
 
 public:
 	DuplicateRemoval(Schema& _schema, RelationalOp* _producer);
