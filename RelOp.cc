@@ -218,11 +218,14 @@ bool DuplicateRemoval::GetNext(Record& _record){
 	while(producer->GetNext(_record)) {
 		stringstream ss;
 		_record.print(ss, schema);
-		/*unordered_set<string>::iterator it = hashTable.find(ss.str());
-		if (it == hashTable.end()) {
-			hashTable.insert(ss.str());
+		_record.GetBits();
+		//Boolean to see if we found a duplicate or not
+		bool foundDuplicate = removalSet.find(ss.str()) != removalSet.end();
+		//If we found a duplicate, add it to removal set
+		if(!foundDuplicate) {
+			removalSet.insert(ss.str());
 			return true;
-		}*/
+		}
 	}
 	return false;
 
@@ -252,7 +255,7 @@ Sum::~Sum() {
 
 bool Sum::GetNext(Record& _record){
 
-	cout << "Run Sum: GETNEXT" << endl;
+	//cout << "Run Sum: GETNEXT" << endl;
 	if (recordSent) return false;
 	int intSum = 0;
 	double doubleSum = 0;
@@ -312,7 +315,7 @@ GroupBy::~GroupBy() {
 
 bool GroupBy::GetNext(Record& _record){
 
-	cout << "Run GroupBy: GETNEXT" << endl;
+	//cout << "Run GroupBy: GETNEXT" << endl;
 	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
 
 	int i = 0;

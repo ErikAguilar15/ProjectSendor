@@ -173,8 +173,11 @@ private:
 	// operator generating data
 	RelationalOp* producer;
 
-	//Map for checking records 
+	//Map for checking records
 	EfficientMap <KeyString, KeyString> map;
+
+	//Use this set instead
+	unordered_set<string> removalSet;
 
 public:
 	DuplicateRemoval(Schema& _schema, RelationalOp* _producer);
