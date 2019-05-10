@@ -268,7 +268,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 	RelationalOp* rootJoinRelationalOp;
 
-	rootJoinRelationalOp = postOrderTraversal(root,allTableScans, allSelects, _predicate);
+	rootJoinRelationalOp = postOrderTraversal(root, allTableScans, allSelects, _predicate);
 
 	// create the remaining operators based on the query
 
@@ -438,15 +438,25 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// - Sum -
 
 	else if (_groupingAtts == NULL && _finalFunction != NULL) {
+		vector<string> sumAttributes;
+		vector<string> sumAttributeTypes;
+		vector<unsigned int> sumDistincts;
 		Function compute;
 		// I have no idea if this is needed for proj 2. Included it for now.
-		// compute.GrowFromParseTree(_finalFunction, schemaOut)
+		compute.GrowFromParseTree(_finalFunction, schemaIn);
+		sumAttributes.push_back("Sum");
+		sumAttributeTypes.push_back("FLOAT");
+		sumDistincts.push_back(1);
+		//Schema out(sumAttributes, sumAttributeTypes, sumDistincts);
 		Sum *sumRelOp = new Sum(schemaIn, schemaOut, compute, rootJoinRelationalOp);
 		secondLastRelOp = sumRelOp;
 	}
 
 	// - GroupBy -
 	else if (_groupingAtts != NULL) {
+		vector<string> groupByAttributes;
+		vector<string> groupBYAttributeTypes;
+		vector<unsigned int> groupByDistincts;
 		OrderMaker attsToGroup;
 		// I have no idea if we need to use the constructor with the Schema parameter. (Get the schema for the atts that are on the group by).
 		// I think the default constructor will worked fine.
