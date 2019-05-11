@@ -438,33 +438,51 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// - Sum -
 
 	else if (_groupingAtts == NULL && _finalFunction != NULL) {
-		vector<string> sumAttributes;
-		vector<string> sumAttributeTypes;
-		vector<unsigned int> sumDistincts;
+		//vector<string> sumAttributes;
+		//vector<string> sumAttributeTypes;
+		//vector<unsigned int> sumDistincts;
 		Function compute;
 		// I have no idea if this is needed for proj 2. Included it for now.
 		compute.GrowFromParseTree(_finalFunction, schemaIn);
-		sumAttributes.push_back("Sum");
-		sumAttributeTypes.push_back("FLOAT");
-		sumDistincts.push_back(1);
-		//Schema out(sumAttributes, sumAttributeTypes, sumDistincts);
+		attributes.push_back("Sum");
+		attributeTypes.push_back("FLOAT");
+		distincts.push_back(1);
+		//Schema schemaOut(attributes, attributeTypes, distincts);
 		Sum *sumRelOp = new Sum(schemaIn, schemaOut, compute, rootJoinRelationalOp);
 		secondLastRelOp = sumRelOp;
 	}
 
 	// - GroupBy -
 	else if (_groupingAtts != NULL) {
-		vector<string> groupByAttributes;
-		vector<string> groupBYAttributeTypes;
-		vector<unsigned int> groupByDistincts;
+		//vector<string> groupByAttributes;
+		//vector<string> groupBYAttributeTypes;
+		//vector<unsigned int> groupByDistincts;
+		vector<int> keepMe;
+		NameList* grouping = _groupingAtts;
+		//String str(grouping->name);
+		//keepMe.push_back(schemaIn.Index(str));
+		//attributes.push_back(str);
+		Type typeGroup;
+		//typeGroup = schemaIn.FindType(name);
+
 		OrderMaker attsToGroup;
 		// I have no idea if we need to use the constructor with the Schema parameter. (Get the schema for the atts that are on the group by).
 		// I think the default constructor will worked fine.
 
+		switch (typeGroup) {
+			case Integer: attributeTypes.push_back("INTEGER");
+						break;
+			case Float: attributeTypes.push_back("FLOAT");
+						break;
+			case String: attributeTypes.push_back("STRING");
+						break;
+			default: attributeTypes.push_back("UNKNOWN");
+		}
+
 		Function compute;
 		// I have no idea if this is needed for proj 2. Included it for now.
 		// NOTE, for groupby, only execute the line below IF there is a _finalFunction. (Check if _finalFunction is NULL or not). Can't growFromParseTree if _finalFunction is NULL.
-		// compute.GrowFromParseTree(_finalFunction, schemaOut)
+		compute.GrowFromParseTree(_finalFunction, schemaIn);
 		GroupBy *groupByRealOp = new GroupBy(schemaIn, schemaOut, attsToGroup, compute, rootJoinRelationalOp);
 		secondLastRelOp = groupByRealOp;
 	}
