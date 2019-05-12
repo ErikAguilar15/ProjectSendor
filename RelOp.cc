@@ -308,6 +308,8 @@ GroupBy::GroupBy(Schema& _schemaIn, Schema& _schemaOut, OrderMaker& _groupingAtt
 	groupingAtts = _groupingAtts;
 	compute = _compute;
 	producer = _producer;
+
+	phase = 0;
 }
 GroupBy::~GroupBy() {
 
@@ -315,6 +317,7 @@ GroupBy::~GroupBy() {
 
 bool GroupBy::GetNext(Record& _record){
 
+	//split into two phases
 	//cout << "Run GroupBy: GETNEXT" << endl;
 	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
 
@@ -328,9 +331,11 @@ bool GroupBy::GetNext(Record& _record){
 	vector<string> attributeNames;
 	Schema copy = schemaOut;
 	attributeStorage = copy.GetAtts();
+
 	for(i = 1; i < copy.GetNumAtts(); i++){
 		attributeNames.push_back(attributeStorage[i].name);
 	}
+
 	while(producer->GetNext(_record)){
 
 		KeyString name = attributeStorage[vectorIterator].name;
@@ -369,13 +374,13 @@ bool GroupBy::GetNext(Record& _record){
 		vectorIterator++;
 		return true;
 	}
-		groups.MoveToStart();
-		for(int i = 0; i < groups.Length(); i++){
-			cout << groups.CurrentData() << endl;
-			groups.Advance();
-		}
-		return false;
+	groups.MoveToStart();
+	for(int i = 0; i < groups.Length(); i++){
+		cout << groups.CurrentData() << endl;
+		groups.Advance();
 	}
+	return false;
+}
 
 Schema& GroupBy::getSchemaIn() {
 	return schemaIn;

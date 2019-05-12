@@ -88,14 +88,14 @@ Type Function :: RecursivelyBuild (FuncOperator* parseTree, Schema& mySchema) {
 				opList[numOps].myOp = PushInt;
 				opList[numOps].recInput = myNum;
 				opList[numOps].litInput = NULL;
-				numOps++;	
+				numOps++;
 				return Integer;
 			}
 			else {
 				opList[numOps].myOp = PushDouble;
 				opList[numOps].recInput = myNum;
 				opList[numOps].litInput = NULL;
-				numOps++;	
+				numOps++;
 				return Float;
 			}
 		}
@@ -166,7 +166,7 @@ Type Function :: RecursivelyBuild (FuncOperator* parseTree, Schema& mySchema) {
 		if (myTypeLeft == Integer) {
 			// the left operand is an ant and needs to be cast
 			opList[numOps].myOp = ToDouble2Down;
-			numOps++;	
+			numOps++;
 		}
 
 		if (myTypeRight == Integer) {
@@ -206,6 +206,20 @@ Type Function :: RecursivelyBuild (FuncOperator* parseTree, Schema& mySchema) {
 	return Integer;
 }
 
+Type Function :: GetType() {
+	if(returnsInt == 1)
+		return Integer;
+	else
+		return Float;
+}
+
+string Function :: GetTypeAsString() {
+	if(returnsInt == 1)
+		return "INTEGER";
+	else
+		return "FLOAT";
+}
+
 void Function :: GrowFromParseTree (FuncOperator* parseTree, Schema& mySchema) {
 	// zero out the list of operations
 	numOps = 0;
@@ -219,7 +233,7 @@ void Function :: GrowFromParseTree (FuncOperator* parseTree, Schema& mySchema) {
 }
 
 Type Function :: Apply (Record& toMe, int &intResult, double &doubleResult) {
-	// this is rather simple; we just loop through and apply all of the 
+	// this is rather simple; we just loop through and apply all of the
 	// operations that are specified during the function
 
 	// this is the stack that holds the intermediate results from the function
@@ -230,7 +244,7 @@ Type Function :: Apply (Record& toMe, int &intResult, double &doubleResult) {
 	for (int i = 0; i < numOps; i++) {
 		switch (opList[i].myOp) {
 			case PushInt: {
-				lastPos++;	
+				lastPos++;
 
 				// see if we need to get the integer from the record
 				if (opList[i].recInput >= 0) {
@@ -245,7 +259,7 @@ Type Function :: Apply (Record& toMe, int &intResult, double &doubleResult) {
 				break;
 			}
 			case PushDouble: {
-				lastPos++;	
+				lastPos++;
 
 				// see if we need to get the double from the record
 				if (opList[i].recInput >= 0) {

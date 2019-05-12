@@ -235,6 +235,7 @@ private:
 	// operator generating data
 	RelationalOp* producer;
 
+	int phase;
 	EfficientMap<KeyString, KeyDouble> groups;
 
 public:

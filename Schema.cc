@@ -129,15 +129,15 @@ int Schema::Project(vector<int>& _attsToKeep) {
 	vector<Attribute> copy; atts.swap(copy);
 
 	for (int i = 0; i <numAtts; i++) {
-		cout << "listing atts: " << copy[i].name << endl;
+		//cout << "listing atts: " << copy[i].name << endl;
 	}
 
 	for (int i=0; i<numAttsToKeep; i++) {
 		int index = _attsToKeep[i] + numAttsToKeep; //fixed this equation to work with our project in querycompiler
-		cout << "index: " << index << endl;
+		//cout << "index: " << index << endl;
 		if ((index >= 0) && (index < numAtts)) {
 			Attribute a; a = copy[index];
-			cout << "att: " << a.name << endl;
+			//cout << "att: " << a.name << endl;
 			atts.push_back(a);
 		}
 		else {
