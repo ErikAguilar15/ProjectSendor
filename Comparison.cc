@@ -363,6 +363,7 @@ int CNF :: GetSortOrders (OrderMaker& left, OrderMaker& right) {
 	// initialize the size of the OrderMakers
 	left.numAtts = 0;
 	right.numAtts = 0;
+	//cout << "jds" << numAnds << endl;
 
 	// loop through all of the conditions in the CNF and find those
 	// that are acceptable for use in a sort ordering:
@@ -602,6 +603,42 @@ int CNF::ExtractCNF (AndList& parseTree, Schema& schema, Record& literal) {
 	return 0;
 }
 
+int CNF :: getLIndex(AndList& _parseTree, Schema& schema) {
+
+	AndList* currCond = &_parseTree;
+	while(currCond != NULL) {
+		if (ConditionOnSchema(*currCond, schema) == false) {
+			// NO; go further along in the list
+			currCond = currCond->rightAnd;
+			continue;
+		}
+		string s(currCond->left->left->value);
+		cout << s << endl;
+		int i = schema.Index(s);
+		if (i != -1) return schema.Index(s);
+		currCond = currCond = currCond->rightAnd;
+	}
+
+}
+int CNF :: getRIndex(AndList& _parseTree, Schema& schema) {
+
+	AndList* currCond = &_parseTree;
+	while(currCond != NULL) {
+		if (ConditionOnSchema(*currCond, schema) == false) {
+			// NO; go further along in the list
+			currCond = currCond->rightAnd;
+			continue;
+		}
+		string s(currCond->left->right->value);
+		cout << s << endl;
+		int i = schema.Index(s);
+		if (i != -1) return schema.Index(s);
+		currCond = currCond = currCond->rightAnd;
+	}
+
+}
+
+
 int CNF::ExtractCNF (AndList& parseTree, Schema& leftSchema, Schema& rightSchema) {
 	// build a new CNF with conditions based on the schemas
 	// one attribute has to come from one schema and the other from another
@@ -646,6 +683,86 @@ int CNF::ExtractCNF (AndList& parseTree, Schema& leftSchema, Schema& rightSchema
 		}
 		else {
 			int rightIdx = rightSchema.Index(s);
+			andList[numAnds].operand2 = Right;
+			andList[numAnds].whichAtt2 = rightIdx;
+			typeRight = rightSchema.FindType(s);
+		}
+
+		// now we check to make sure that there was not a type mismatch
+		if (typeLeft != typeRight) {
+			cerr << "ERROR: Type mismatch for " << currCond->left->left->value
+				<< " AND "	<< currCond->left->right->value << "!" << endl;
+			return -1;
+		}
+
+		// set up the type info for this comparison
+		andList[numAnds].attType = typeLeft;
+
+		// and finally set up the comparison operator for this comparison
+		if (currCond->left->code == LESS_THAN) andList[numAnds].op = LessThan;
+		else if (currCond->left->code == GREATER_THAN) andList[numAnds].op = GreaterThan;
+		else if (currCond->left->code == EQUALS) andList[numAnds].op = Equals;
+		else {
+			cerr << "ERROR: Unknown comparison operator for " << currCond->left->left->value
+					<< " AND "	<< currCond->left->right->value << "!" << endl;
+			return -1;
+		}
+
+		numAnds += 1;
+		currCond = currCond->rightAnd;
+	}
+
+	return 0;
+}
+
+int CNF::ExtractCNF (AndList& parseTree, Schema& leftSchema, Schema& rightSchema, int& leftI, int& rightI) {
+	// build a new CNF with conditions based on the schemas
+	// one attribute has to come from one schema and the other from another
+
+	// previous values stored in CNF are lost
+	numAnds = 0;
+
+	// now we go through and build the comparison structure
+	AndList* currCond = &parseTree;
+	while (currCond != NULL) {
+		// check if at least one operand in condition is an attribute from schema
+		if (ConditionOnSchemas(*currCond, leftSchema, rightSchema) == false) {
+			// NO; go further along in the list
+			currCond = currCond->rightAnd;
+			continue;
+		}
+
+		// these store the types of the two values that are found
+		Type typeLeft;
+		Type typeRight;
+
+		string s(currCond->left->left->value);
+		int leftIdx = leftSchema.Index(s);
+		if (leftIdx != -1) {
+			leftI = leftIdx;
+			andList[numAnds].operand1 = Left;
+			andList[numAnds].whichAtt1 = leftIdx;
+			typeLeft = leftSchema.FindType(s);
+		}
+		else {
+			int rightIdx = rightSchema.Index(s);
+			rightI = rightIdx;
+			andList[numAnds].operand1 = Right;
+			andList[numAnds].whichAtt1 = rightIdx;
+			typeRight = rightSchema.FindType(s);
+		}
+
+		s = currCond->left->right->value;
+		leftIdx = leftSchema.Index(s);
+		if (leftIdx != -1) {
+			leftI = leftIdx;
+			andList[numAnds].operand2 = Left;
+			andList[numAnds].whichAtt2 = leftIdx;
+			typeLeft = leftSchema.FindType(s);
+		}
+		else {
+			int rightIdx = rightSchema.Index(s);
+			rightI = rightIdx;
 			andList[numAnds].operand2 = Right;
 			andList[numAnds].whichAtt2 = rightIdx;
 			typeRight = rightSchema.FindType(s);

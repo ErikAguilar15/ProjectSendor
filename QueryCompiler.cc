@@ -5,7 +5,7 @@
 #include "Record.h"
 #include "DBFile.h"
 #include "Comparison.h"
-#include "Function.h"
+//#include "Function.h"
 #include "RelOp.h"
 #include <iostream>
 #include <vector>
@@ -38,16 +38,16 @@ RelationalOp* getRelationalOperator(string tableName, vector<Scan*>allTableScans
 
 }
 
-RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableScans, vector<Select*>allSelects, AndList* _predicate) {
+RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableScans, vector<Select*>allSelects, AndList* _predicate, int cnt) {
 
 	RelationalOp* leftChild;
 	RelationalOp* rightChild;
 
 	if (root->leftChild != NULL) {
-		leftChild = postOrderTraversal(root->leftChild, allTableScans, allSelects, _predicate);
+		leftChild = postOrderTraversal(root->leftChild, allTableScans, allSelects, _predicate, cnt + 1);
 	}
 	if (root->rightChild != NULL) {
-		rightChild = postOrderTraversal(root->rightChild, allTableScans, allSelects, _predicate);
+		rightChild = postOrderTraversal(root->rightChild, allTableScans, allSelects, _predicate, cnt + 1);
 	}
 	//cout << "CURRENT NODE ID: " << root->id << endl;
 
@@ -63,6 +63,11 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		Schema rightSchema;
 		Schema outSchema;
 		CNF tableCNF;
+
+		int *keepMeL;
+		int *keepMeR;
+		int Lsize = 0;
+		int Rsize = 0;
 
 		Join* leftJoinCast = dynamic_cast<Join*>(leftChild);
 		Join* rightJoinCast = dynamic_cast<Join*>(rightChild);
@@ -97,14 +102,30 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		outSchema.Append(leftSchema);
 		outSchema.Append(rightSchema);
 
+		keepMeL = new int[1];
+		keepMeR = new int[1];
+
 		//cout << leftSchema << endl;
 		//cout << rightSchema << endl;
-		tableCNF.ExtractCNF(*_predicate, leftSchema, rightSchema);
-		//cout << tableCNF << endl;
+		//int leftI = tableCNF.getLIndex(*_predicate, leftSchema);
+		//int rightI = tableCNF.getRIndex(*_predicate, rightSchema);
+		int leftI, rightI;
+		tableCNF.ExtractCNF(*_predicate, leftSchema, rightSchema, leftI, rightI);
+		cout << leftI << endl << rightI << endl;
+		cout << tableCNF << endl;
+
+		keepMeL[0] = leftI;
+		keepMeR[0] = rightI;
+
+		//string sL(pred->rightAnd->left->left->value);
+		//string sR(pred->rightAnd->left->right->value);
 		//leftChild->print(cout);
 		//rightChild->print(cout);
 
-		Join *joinedStuff = new Join(leftSchema, rightSchema, outSchema, tableCNF, leftChild, rightChild);
+		OrderMaker oLeft(leftSchema, keepMeL, 1);
+		OrderMaker oRight(rightSchema, keepMeR, 1);
+
+		Join *joinedStuff = new Join(leftSchema, rightSchema, outSchema, tableCNF, leftChild, rightChild, oLeft, oRight);
 
 		return joinedStuff;
 
@@ -272,7 +293,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// - Don't do this for the inital nodes (tables size of 1), since they are not joins, they are scans -
 
 	RelationalOp* rootJoinRelationalOp;
-	rootJoinRelationalOp = postOrderTraversal(root, allTableScans, allSelects, _predicate);
+	rootJoinRelationalOp = postOrderTraversal(root, allTableScans, allSelects, _predicate, 1);
 
 	// create the remaining operators based on the query
 

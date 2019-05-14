@@ -168,7 +168,7 @@ int Schema::Project(vector<int>& _attsToKeep) {
 
 	for (int i=0; i<numAttsToKeep; i++) {
 		int index = _attsToKeep[i]; //fixed this equation to work with our project in querycompiler
-		//cout << "index: " << index << endl;
+		//out << "index: " << index << endl;
 		if ((index >= 0) && (index < numAtts)) {
 			Attribute a; a = copy[index];
 			//cout << "att: " << a.name << endl;

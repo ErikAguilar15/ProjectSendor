@@ -153,7 +153,10 @@ private:
 	TwoWayList<Record> TwoWayJoins;
 
 	//Multi-map for hash join
-	EfficientMap<Record, SwapInt> multiMap;
+	EfficientMap<KeyString, Record> multiMap;
+	TwoWayList<Record> deleteList;
+	OrderMaker oLeft;
+	OrderMaker oRight;
 
 	//Boolean tracker
 	bool running;
@@ -165,6 +168,8 @@ private:
 public:
 	Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 		CNF& _predicate, RelationalOp* _left, RelationalOp* _right);
+		Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
+			CNF& _predicate, RelationalOp* _left, RelationalOp* _right, OrderMaker& _oRight, OrderMaker& _oLeft);
 	virtual ~Join();
 
 	Schema& getLeftSchema();

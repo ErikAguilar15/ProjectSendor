@@ -78,7 +78,7 @@ Select::~Select() {
 
 bool Select::GetNext(Record& _record){
 
-	cout << "Run Select: GETNEXT" << endl;
+	//cout << "Run Select: GETNEXT" << endl;
 
 	while (true) {
 		int check = producer->GetNext(_record);
@@ -176,6 +176,7 @@ ostream& Project::print(ostream& _os) {
 //-------------------------------------------------------JOIN --------------------------------------------------------------------------------------
 Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	CNF& _predicate, RelationalOp* _left, RelationalOp* _right) {
+	cout << "making join" << endl;
 	schemaLeft = _schemaLeft;
 	//cout << "Join schemaleft: " << schemaLeft << endl;
 	schemaRight = _schemaRight;
@@ -188,6 +189,33 @@ Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	//left->print(cout);
 	right = _right;
 	//right->print(cout);
+	//oLeft = new OrderMaker(schemaLeft);
+	//oRight = new OrderMaker(schemaRight);
+	//cout << "join orders: " << oLeft << endl << oRight << endl;
+	running = true;
+
+//create a comparison based off what predicate we have (==)
+
+}
+
+Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
+	CNF& _predicate, RelationalOp* _left, RelationalOp* _right, OrderMaker& _oRight, OrderMaker& _oLeft) {
+	cout << "making join" << endl;
+	schemaLeft = _schemaLeft;
+	//cout << "Join schemaleft: " << schemaLeft << endl;
+	schemaRight = _schemaRight;
+	//cout << "Join schemaRight: " << schemaRight << endl;
+	schemaOut = _schemaOut;
+	//cout << "Join schemaout: " << schemaOut << endl;
+	predicate = _predicate;
+	//cout << "Join pred: " << predicate << endl;
+	left = _left;
+	//left->print(cout);
+	right = _right;
+	//right->print(cout);
+	oLeft = _oLeft;
+	oRight = _oRight;
+	//cout << "join orders: " << oLeft << endl << oRight << endl;
 	running = true;
 
 //create a comparison based off what predicate we have (==)
@@ -219,7 +247,8 @@ bool Join::GetNext(Record& _record){
 	//cout << "OUTPUT SOMETHING" << endl;
 	//Need to make an if statement to determine which to use
 	//cout << "Running JOIN: GETNEXT" << endl;
-	return NestedLoop(_record);
+	//return NestedLoop(_record);
+	return Hash(_record);
 
 	//Hash(_record);
 }
@@ -312,21 +341,60 @@ bool Join::NestedLoop(Record& _record){
 
 	//----------------------Hash Join------------------------//
 bool Join::Hash(Record& _record){
-//Build phase
-Record rec;
-Record currRec;
-KeyString data;
-bool running = true;
+	//Build phase
+	Record rec;
+	Record currRec;
+	SwapInt data = 0;
+	bool running = true;
+	predicate.GetSortOrders(oLeft, oRight);
 
-//Condition to make sure we build before beginning probe phase
-if(running){
-	//OrderMaker(left, right);
-	//get left node because it should be the smaller value
-	while(left->GetNext(rec)){
-		//multiMap.Insert(rec, data);
+	//Condition to make sure we build before beginning probe phase
+	if(running){
+		//OrderMaker(left, right);
+		//get left node because it should be the smaller value
+		while(left->GetNext(rec)){
+			//KeyString name = rec.makeKey(schemaLeft);
+			//multiMap.Insert(name, rec);
+
+			Schema copy = schemaLeft;
+			vector <int> keep;
+
+			for (int i = 0; i < oLeft.numAtts; i++) {
+				int temp = oLeft.whichAtts[i];
+				//cout << temp;
+				keep.push_back(temp);
+			}
+			copy.Project(keep);
+
+			rec.Project(&oLeft.whichAtts[0], oLeft.numAtts, schemaLeft.GetNumAtts());
+			KeyString name = rec.makeKey(copy);
+			//cout << name << endl;
+
+			multiMap.Insert(name, rec);
+		}
+		running = false;
+		multiMap.MoveToStart();
 	}
-	running = false;
-}
+
+	while (true) {
+
+		//Step 1 get record and add to list
+		int check = right->GetNext(currentRecord);
+
+		if(!check) {
+			return false;
+		}
+
+		//Record *rec1 = &multiMap.CurrentData();
+		Schema copy;
+
+		//if (multiMap.isThere()) {
+
+		//}
+
+		//check = predicate.Run()
+
+	}
 
 }
 
@@ -478,7 +546,8 @@ bool GroupBy::GetNext(Record& _record){
 			//cout << endl;
 
 			double result = 0;
-			Schema copy = schemaOut;
+			Schema copy = schemaIn;
+			vector<int> keep;
 			//attributeStorage = copy.GetAtts();
 
 			if (check) {
@@ -487,11 +556,14 @@ bool GroupBy::GetNext(Record& _record){
 				double runningDoubleSum = 0;
 				compute.Apply(rec, runningIntSum, runningDoubleSum);
 				result = runningDoubleSum + (double)runningIntSum;
+				//cout << result << endl;
 
-				//cout << "hello" << endl;
-				vector<int> keep;
-				for(i = 1; i < copy.GetNumAtts(); i++){
-					keep.push_back(i);
+				//cout << "hello " << groupingAtts.numAtts << endl;
+				//vector<int> keep;
+				for(i = 0; i < groupingAtts.numAtts; i++){
+					int temp = groupingAtts.whichAtts[i];
+					//cout << temp;
+					keep.push_back(temp);
 				}
 
 				copy.Project(keep);
@@ -499,7 +571,7 @@ bool GroupBy::GetNext(Record& _record){
 			}
 			else {
 				//cout << "here" << endl;
-				vector<int> keep;
+				//vector<int> keep;
 				for(i = 1; i < copy.GetNumAtts(); i++){
 					keep.push_back(i);
 				}
@@ -507,7 +579,7 @@ bool GroupBy::GetNext(Record& _record){
 				copy.Project(keep);
 			}
 
-			//cout << "check " << groupingAtts.numAtts << endl;
+			//cout << "check " << groupingAtts.whichAtts[0] << endl;
 			rec.Project(&groupingAtts.whichAtts[0], groupingAtts.numAtts, schemaIn.GetNumAtts());
 			//cout << "check1" << endl;
 			KeyString name = rec.makeKey(copy);

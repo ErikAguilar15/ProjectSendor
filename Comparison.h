@@ -67,7 +67,7 @@ public:
 	int whichAtts[MAX_ANDS];
 	Type whichTypes[MAX_ANDS];
 
-	
+
 	OrderMaker();
 	//copy constructor
 	OrderMaker(const OrderMaker& om);
@@ -145,6 +145,9 @@ public:
 	// constants go into literal record
 	// return 0 on success, -1 otherwise
     int ExtractCNF (AndList& parseTree,	Schema& leftSchema, Schema& rightSchema);
+		int ExtractCNF (AndList& parseTree,	Schema& leftSchema, Schema& rightSchema, int& leftI, int& rightI);
+		int getLIndex(AndList& _predicate, Schema& schema);
+		int getRIndex(AndList& _predicate, Schema& schema);
 
 	// apply CNF to the records and either accept or reject them
     // return false if CNF fails, true otherwise
