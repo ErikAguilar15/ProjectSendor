@@ -12,6 +12,7 @@
 #include "Comparison.h"
 #include "EfficientMap.cc"
 #include "Keyify.h"
+#include "Swapify.h"
 
 using namespace std;
 
@@ -147,6 +148,18 @@ private:
 	RelationalOp* left;
 	RelationalOp* right;
 
+	//List for the Nested Loop Join
+	TwoWayList<Record> TwoWayJoins;
+
+	//Multi-map for hash join
+	EfficientMap<Record, SwapInt> multiMap;
+
+	//Boolean tracker
+	bool running;
+	int ii = 0;
+
+	//Check for processing
+	Record currentRecord;
 
 public:
 	Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
@@ -161,6 +174,8 @@ public:
 	RelationalOp* getRightRelationalOp();
 
 	virtual bool GetNext(Record& _record);
+	virtual bool NestedLoop(Record& _record);
+	virtual bool Hash(Record& _record);
 
 	virtual ostream& print(ostream& _os);
 };

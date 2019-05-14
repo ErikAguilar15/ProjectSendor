@@ -379,20 +379,20 @@ int main () {
 
 	cout << queryTree << endl;
 
-    DBFile db;
-    string file = "heapTables/nation.heap";
-    string t = "nation";
-    db.Open(&file[0]);
+    //DBFile db;
+    //string file = "heapTables/nation.heap";
+    //string t = "nation";
+    //db.Open(&file[0]);
 		//db.MoveFirst();
 
-    Record rec;
-    Schema sch;
+    //Record rec;
+    //Schema sch;
 
-    catalog.GetSchema(t, sch);
+    //catalog.GetSchema(t, sch);
 
     //cout << sch << endl;
 
-    int i = 0;
+  /*  int i = 0;
     while (db.GetNext(rec)) {
         if (i > 0) {
             rec.print(cout, sch);
@@ -400,6 +400,7 @@ int main () {
         }
         i++;
     }
+		*/
 	queryTree.ExecuteQuery();
 
 	return 0;

@@ -97,6 +97,8 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		outSchema.Append(leftSchema);
 		outSchema.Append(rightSchema);
 
+		//cout << leftSchema << endl;
+		//cout << rightSchema << endl;
 		tableCNF.ExtractCNF(*_predicate, leftSchema, rightSchema);
 
 		Join *joinedStuff = new Join(leftSchema, rightSchema, outSchema, tableCNF, leftChild, rightChild);
@@ -267,7 +269,6 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 	// - Don't do this for the inital nodes (tables size of 1), since they are not joins, they are scans -
 
 	RelationalOp* rootJoinRelationalOp;
-
 	rootJoinRelationalOp = postOrderTraversal(root, allTableScans, allSelects, _predicate);
 
 	// create the remaining operators based on the query

@@ -2,6 +2,9 @@
 #include <sstream>
 #include "RelOp.h"
 #include "EfficientMap.h"
+#include "TwoWayList.h"
+#include "Swapify.h"
+#include "Comparison.h"
 
 using namespace std;
 
@@ -30,6 +33,7 @@ bool Scan::GetNext(Record& _record){
 	int check = file.GetNext(_record);
 	//cout << "SCAN check value: " << check << endl;
 
+
 	//Test for printing records
 	/*
 	while (file.GetNext(_record)) {
@@ -38,9 +42,13 @@ bool Scan::GetNext(Record& _record){
 	}*/
 
 	if(check == 0){
+		//_record.print(cout, schema);
+		//cout << endl;
 		return true;
-	} else return false;
-
+	} else {
+		//cout << "nothing" << endl;
+		return false;
+	}
 }
 string Scan::getTableName() {
 	return tableName;
@@ -52,7 +60,7 @@ Schema& Scan::getSchema() {
 	return schema;
 }
 ostream& Scan::print(ostream& _os) {
-	return _os << "SCAN: SCHEMA IN/OUT: " << schema << endl;
+	return _os << "SCAN: SCHEMA IN/OUT: " << schema << endl << endl;
 }
 
 //-------------------------------------------------------SELECT --------------------------------------------------------------------------------------
@@ -101,7 +109,7 @@ RelationalOp* Select::getProducer() {
 	return producer;
 }
 ostream& Select::print(ostream& _os) {
-	return _os << "SELECT: SCHEMA IN/OUT: " << schema << endl;
+	return _os << "SELECT: SCHEMA IN/OUT: " << schema << endl << endl;
 }
 
 
@@ -158,7 +166,7 @@ RelationalOp* Project::getProducer() {
 	return producer;
 }
 ostream& Project::print(ostream& _os) {
-	return _os << "PROJECT: SCHEMA IN: " << schemaIn << " SCHEMA OUT: " << schemaOut <<  endl;
+	return _os << "PROJECT: SCHEMA IN: " << schemaIn << endl << " SCHEMA OUT: " << schemaOut << endl << endl;
 }
 
 
@@ -171,6 +179,9 @@ Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	predicate = _predicate;
 	left = _left;
 	right = _right;
+	running = true;
+
+//create a comparison based off what predicate we have (==)
 
 }
 Schema& Join::getLeftSchema() {
@@ -196,11 +207,118 @@ Join::~Join() {
 }
 
 bool Join::GetNext(Record& _record){
+//cout << "OUTPUT SOMETHING" << endl;
+			//Need to make an if statement to determine which to use
+			NestedLoop(_record);
 
+			//Hash(_record);
+}
+
+	//----------------Nested-Loop Join--------------//
+bool Join::NestedLoop(Record& _record){
+	Record rec;
+	//Record currentRecord;
+	//bool running = true;//TODO: put this into the constructor
+
+	//To check number of tuples
+
+//Build phase
+
+	//Condition to make sure we build before beginning probe phase
+	if(running){
+		//get left node because it should be the smaller value
+		while(left->GetNext(rec)){
+			//cout << schemaLeft;
+			//rec.print(cout, schema);
+			//cout << endl;
+			TwoWayJoins.Insert(rec);
+		}
+		running = false;
+		TwoWayJoins.MoveToFinish();
+	}
+	//cout << "ANYTHING" << endl;
+
+	cout << TwoWayJoins.Length() << endl;
+	//cout << "something22";
+
+//Probe Phase
+
+			//if(left is at the end, left.movetostart)
+			//If statement to check if reaches end of the left (boolean tracker)
+			//Store previous tuple somewhere in the class
+			//cout << schemaRight;
+			//Run until we have no more records to join
+			while(true){
+
+				if(TwoWayJoins.AtEnd()){
+					//cout << "345" << endl;
+					//Use right node for joins and start at the beginning of the list
+					if(!right->GetNext(currentRecord)){
+						cout << "WHAT IS THIS " + ii << endl;
+						return false;
+					}
+					ii++;
+					TwoWayJoins.MoveToStart();
+				}
+				//cout << "PLEASE WORK" << endl;
+				//set to current to find matching relation
+				//currRec = TwoWayJoins.Current();
+				//Run from comparison.cc to compare records (true if holds, false otherwise)
+				Record *rec1 = &TwoWayJoins.Current();
+				//cout << "123" << endl;
+				//currentRecord.print(cout, schemaRight);
+				//cout << endl;
+				//cout << schemaRight << endl;
+
+				//rec1.print(cout, schemaLeft);
+				//cout << endl;
+
+				if(predicate.Run(currentRecord, *rec1)){
+					//append the records for join
+					//cout << "OUTPUT SOMETHING ELSE HERE" << endl;
+					_record.AppendRecords(currentRecord, *rec1, schemaRight.GetNumAtts(), schemaLeft.GetNumAtts());
+					//cout << schemaOut;
+					_record.print(cout, schemaOut);
+					cout << endl;
+					//cout << "SOMETHING PLEASE";
+					//cout << endl;
+					TwoWayJoins.Advance();
+					return true;
+				}
+				//Continue moving forward through the list
+				TwoWayJoins.Advance();
+				//cout << "Are we even advancing?????" << endl;
+			}
+			cout << "IS IT FINISHED JOINING" << endl;
+		}
+		//return false; move to beginning for the if statement
+
+	//----------------------Hash Join------------------------//
+bool Join::Hash(Record& _record){
+//Build phase
+Record rec;
+Record currRec;
+KeyString data;
+bool running = true;
+
+//Condition to make sure we build before beginning probe phase
+if(running){
+	//OrderMaker(left, right);
+	//get left node because it should be the smaller value
+	while(left->GetNext(rec)){
+		//multiMap.Insert(rec, data);
+	}
+	running = false;
+}
 
 }
+
+
+
+
+
 ostream& Join::print(ostream& _os) {
-	return _os << "JOIN: SCHEMA LEFT: " << schemaLeft << " SCHEMA RIGHT: " << schemaRight << " SCHEMA OUT:" << schemaOut << endl;
+	return _os << "JOIN: SCHEMA LEFT: " << schemaLeft << endl << " SCHEMA RIGHT: " << schemaRight << endl << " SCHEMA OUT:" << schemaOut << endl << endl;
 }
 
 
@@ -237,7 +355,7 @@ RelationalOp* DuplicateRemoval::getProducer() {
 	return producer;
 }
 ostream& DuplicateRemoval::print(ostream& _os) {
-	return _os << "DISTINCT: SCHEMA: " << schema << endl;
+	return _os << "DISTINCT: SCHEMA: " << schema << endl << endl;
 }
 
 
@@ -257,16 +375,18 @@ bool Sum::GetNext(Record& _record){
 
 	//cout << "Run Sum: GETNEXT" << endl;
 	if (recordSent) return false;
+	//Keep running sums of each type
 	int intSum = 0;
 	double doubleSum = 0;
 	while(producer->GetNext(_record)) {
 		int intResult = 0;
 		double doubleResult = 0;
 		Type t = compute.Apply(_record, intResult, doubleResult);
+		//Check which of the two possible types and add appropriately
 		if (t == Integer)	intSum+= intResult;
 		if (t == Float)		doubleSum+= doubleResult;
 	}
-
+	//Positioning and type conversions
 	double val = doubleSum + (double)intSum;
 	char* recSpace = new char[PAGE_SIZE];
   int currentPosInRec = sizeof (int) * (2);
@@ -275,8 +395,10 @@ bool Sum::GetNext(Record& _record){
 	currentPosInRec += sizeof (double);
 	((int *) recSpace)[0] = currentPosInRec;
 
+	//copy actual sum into new variable to otput
 	Record sumRecord;
-	sumRecord.CopyBits( recSpace, currentPosInRec );
+	sumRecord.CopyBits(recSpace, currentPosInRec);
+	//Free memory
 	delete [] recSpace;
 	_record = sumRecord;
 	recordSent = 1;
@@ -296,7 +418,7 @@ RelationalOp* Sum::getProducer() {
 	return producer;
 }
 ostream& Sum::print(ostream& _os) {
-	return _os << "SUM: SCHEMA IN: " << schemaIn << " SCHEMA OUT: " << schemaOut << endl;
+	return _os << "SUM: SCHEMA IN: " << schemaIn << endl << " SCHEMA OUT: " << schemaOut << endl << endl;
 }
 
 
@@ -442,7 +564,7 @@ RelationalOp* WriteOut::getProducer() {
 	return producer;
 }
 ostream& WriteOut::print(ostream& _os) {
-	return _os << "WRITEOUT: FILE: " << outFile << " SCHEMA: " << schema << endl;
+	return _os << "WRITEOUT: FILE: " << outFile << " SCHEMA: " << schema << endl <<  endl;
 }
 
 
