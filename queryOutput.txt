@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 {ps_supplycost: 45217.8, ps_suppkey: 100
 {ps_supplycost: 40561.9, ps_suppkey: 51
 {ps_supplycost: 36930.6, ps_suppkey: 52
@@ -50,4 +48,3 @@
 {ps_supplycost: 35115.5, ps_suppkey: 97
 {ps_supplycost: 38792.2, ps_suppkey: 98
 {ps_supplycost: 42544.3, ps_suppkey: 99
->>>>>>> bca6c568e218048a644a6caa819962e92140b141
