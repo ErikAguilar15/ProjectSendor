@@ -119,7 +119,7 @@ int Schema::RenameAtt(string& _oldName, string& _newName) {
 	return 0;
 }
 
-int Schema::Project(vector<int>& _attsToKeep) {
+int Schema::ProjectX(vector<int>& _attsToKeep) {
 	int numAttsToKeep = _attsToKeep.size();
 	int numAtts = atts.size();
 
@@ -153,7 +153,7 @@ int Schema::Project(vector<int>& _attsToKeep) {
 	return 0;
 }
 
-int Schema::ProjectX(vector<int>& _attsToKeep) {
+int Schema::Project(vector<int>& _attsToKeep) {
 	int numAttsToKeep = _attsToKeep.size();
 	int numAtts = atts.size();
 

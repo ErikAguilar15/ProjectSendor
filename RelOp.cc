@@ -78,7 +78,7 @@ Select::~Select() {
 
 bool Select::GetNext(Record& _record){
 
-	//cout << "Run Select: GETNEXT" << endl;
+	cout << "Run Select: GETNEXT" << endl;
 
 	while (true) {
 		int check = producer->GetNext(_record);
@@ -87,6 +87,9 @@ bool Select::GetNext(Record& _record){
 		if (!check) return false;
 		else {
 				check = predicate.Run(_record, constants);
+				//_record.print(cout, schema);
+				//constants.print(cout, schema);
+				//cout << endl;
 				if (check) return true;
 		}
 	}
@@ -131,7 +134,7 @@ Project::~Project() {
 
 bool Project::GetNext(Record& _record){
 
-	cout << "Run Project: GETNEXT" << endl;
+	//cout << "Run Project: GETNEXT" << endl;
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 
@@ -174,11 +177,17 @@ ostream& Project::print(ostream& _os) {
 Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	CNF& _predicate, RelationalOp* _left, RelationalOp* _right) {
 	schemaLeft = _schemaLeft;
+	//cout << "Join schemaleft: " << schemaLeft << endl;
 	schemaRight = _schemaRight;
+	//cout << "Join schemaRight: " << schemaRight << endl;
 	schemaOut = _schemaOut;
+	//cout << "Join schemaout: " << schemaOut << endl;
 	predicate = _predicate;
+	//cout << "Join pred: " << predicate << endl;
 	left = _left;
+	//left->print(cout);
 	right = _right;
+	//right->print(cout);
 	running = true;
 
 //create a comparison based off what predicate we have (==)
@@ -207,11 +216,12 @@ Join::~Join() {
 }
 
 bool Join::GetNext(Record& _record){
-//cout << "OUTPUT SOMETHING" << endl;
-			//Need to make an if statement to determine which to use
-			NestedLoop(_record);
+	//cout << "OUTPUT SOMETHING" << endl;
+	//Need to make an if statement to determine which to use
+	//cout << "Running JOIN: GETNEXT" << endl;
+	return NestedLoop(_record);
 
-			//Hash(_record);
+	//Hash(_record);
 }
 
 	//----------------Nested-Loop Join--------------//
@@ -229,7 +239,7 @@ bool Join::NestedLoop(Record& _record){
 		//get left node because it should be the smaller value
 		while(left->GetNext(rec)){
 			//cout << schemaLeft;
-			//rec.print(cout, schema);
+			//rec.print(cout, schemaLeft);
 			//cout << endl;
 			TwoWayJoins.Insert(rec);
 		}
@@ -238,7 +248,7 @@ bool Join::NestedLoop(Record& _record){
 	}
 	//cout << "ANYTHING" << endl;
 
-	cout << TwoWayJoins.Length() << endl;
+	//cout << TwoWayJoins.Length() << endl;
 	//cout << "something22";
 
 //Probe Phase
@@ -249,15 +259,19 @@ bool Join::NestedLoop(Record& _record){
 			//cout << schemaRight;
 			//Run until we have no more records to join
 			while(true){
-
+				//cout << "hdsios" << endl;
 				if(TwoWayJoins.AtEnd()){
 					//cout << "345" << endl;
 					//Use right node for joins and start at the beginning of the list
-					if(!right->GetNext(currentRecord)){
+					int check = right->GetNext(currentRecord);
+					//currentRecord.print(cout, schemaRight);
+					//cout << endl;
+					if(!check){
 						cout << "WHAT IS THIS " + ii << endl;
 						return false;
 					}
 					ii++;
+					//cout << ii << endl;
 					TwoWayJoins.MoveToStart();
 				}
 				//cout << "PLEASE WORK" << endl;
@@ -270,16 +284,19 @@ bool Join::NestedLoop(Record& _record){
 				//cout << endl;
 				//cout << schemaRight << endl;
 
-				//rec1.print(cout, schemaLeft);
+				//rec1->print(cout, schemaLeft);
 				//cout << endl;
 
-				if(predicate.Run(currentRecord, *rec1)){
+				int check = predicate.Run(*rec1, currentRecord);
+				//cout << "join run check: " << check<< endl;
+
+				if(check){
 					//append the records for join
 					//cout << "OUTPUT SOMETHING ELSE HERE" << endl;
-					_record.AppendRecords(currentRecord, *rec1, schemaRight.GetNumAtts(), schemaLeft.GetNumAtts());
+					_record.AppendRecords(*rec1, currentRecord, schemaLeft.GetNumAtts(), schemaRight.GetNumAtts());
 					//cout << schemaOut;
-					_record.print(cout, schemaOut);
-					cout << endl;
+					//_record.print(cout, schemaOut);
+					//cout << endl;
 					//cout << "SOMETHING PLEASE";
 					//cout << endl;
 					TwoWayJoins.Advance();
@@ -477,7 +494,7 @@ bool GroupBy::GetNext(Record& _record){
 					keep.push_back(i);
 				}
 
-				copy.ProjectX(keep);
+				copy.Project(keep);
 
 			}
 			else {
@@ -487,7 +504,7 @@ bool GroupBy::GetNext(Record& _record){
 					keep.push_back(i);
 				}
 
-				copy.ProjectX(keep);
+				copy.Project(keep);
 			}
 
 			//cout << "check " << groupingAtts.numAtts << endl;
@@ -556,8 +573,8 @@ bool GroupBy::GetNext(Record& _record){
 				//cout << "2.3" << endl;
 				rec.AppendRecords(recSum, groupsRecs.CurrentData(), 1, schemaOut.GetNumAtts() - 1);
 
-				rec.print(cout, schemaOut);
-				cout << endl;
+				//rec.print(cout, schemaOut);
+				//cout << endl;
 				//groupsRecs.CurrentData().Nullify();
 			}
 			else {
