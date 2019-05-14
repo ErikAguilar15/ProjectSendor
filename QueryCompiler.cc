@@ -100,6 +100,9 @@ RelationalOp* postOrderTraversal(OptimizationTree*root, vector<Scan*>allTableSca
 		//cout << leftSchema << endl;
 		//cout << rightSchema << endl;
 		tableCNF.ExtractCNF(*_predicate, leftSchema, rightSchema);
+		//cout << tableCNF << endl;
+		//leftChild->print(cout);
+		//rightChild->print(cout);
 
 		Join *joinedStuff = new Join(leftSchema, rightSchema, outSchema, tableCNF, leftChild, rightChild);
 
@@ -430,7 +433,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		}
 
 		schemaOut = schemaIn;
-		schemaOut.Project(rkeep);
+		schemaOut.ProjectX(rkeep);
 		cout << schemaOut << endl;
 		Project *projectTable = new Project(schemaIn, schemaOut, numAttsInput, numAttsOutput, keepMe, rootJoinRelationalOp);
 		secondLastRelOp = projectTable;

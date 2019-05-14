@@ -64,6 +64,7 @@ bool Comparison :: Run (Record& left, Record& right) {
 		case Integer: {
 			val1Int = *((int *) val1);
 			val2Int = *((int *) val2);
+			//cout << "comparing " << val1Int << " to " << val2Int << endl;
 
 			// and check the operation type in order to actually do the comparison
 			switch (op) {
