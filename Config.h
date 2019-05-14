@@ -31,7 +31,7 @@ enum Target {Left, Right, Literal};
 enum Type {Integer, Float, String, Name};
 
 // comparison operator
-enum CompOperator {LessThan, GreaterThan, Equals};
+enum CompOperator {LessThan, GreaterThan, /*LessThanEquals, GreaterThanEquals,*/ Equals};
 
 // function operator
 enum ArithOperator {PushInt, PushDouble, ToDouble, ToDouble2Down,

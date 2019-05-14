@@ -11,7 +11,8 @@
 #define LESS_THAN 5
 #define GREATER_THAN 6
 #define EQUALS 7
-
+//#define LESS_THAN_EQUALS 8
+//#define GREATER_THAN_EQUALS 9
 
 // functional expressions
 struct FuncOperand {
