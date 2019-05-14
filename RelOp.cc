@@ -247,8 +247,8 @@ bool Join::GetNext(Record& _record){
 	//cout << "OUTPUT SOMETHING" << endl;
 	//Need to make an if statement to determine which to use
 	//cout << "Running JOIN: GETNEXT" << endl;
-	//return NestedLoop(_record);
-	return Hash(_record);
+	return NestedLoop(_record);
+	//return Hash(_record);
 
 	//Hash(_record);
 }
