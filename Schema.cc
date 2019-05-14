@@ -129,15 +129,49 @@ int Schema::Project(vector<int>& _attsToKeep) {
 	vector<Attribute> copy; atts.swap(copy);
 
 	for (int i = 0; i <numAtts; i++) {
-		cout << "listing atts: " << copy[i].name << endl;
+		//cout << "listing atts: " << copy[i].name << endl;
 	}
 
 	for (int i=0; i<numAttsToKeep; i++) {
 		int index = _attsToKeep[i] + numAttsToKeep; //fixed this equation to work with our project in querycompiler
-		cout << "index: " << index << endl;
+		//cout << "index: " << index << endl;
 		if ((index >= 0) && (index < numAtts)) {
 			Attribute a; a = copy[index];
-			cout << "att: " << a.name << endl;
+			//cout << "att: " << a.name << endl;
+			atts.push_back(a);
+		}
+		else {
+			atts.swap(copy);
+			copy.clear();
+
+			return -1;
+		}
+	}
+
+	copy.clear();
+
+	return 0;
+}
+
+int Schema::ProjectX(vector<int>& _attsToKeep) {
+	int numAttsToKeep = _attsToKeep.size();
+	int numAtts = atts.size();
+
+	// too many attributes to keep
+	if (numAttsToKeep > numAtts) return -1;
+
+	vector<Attribute> copy; atts.swap(copy);
+
+	for (int i = 0; i <numAtts; i++) {
+		//cout << "listing atts: " << copy[i].name << endl;
+	}
+
+	for (int i=0; i<numAttsToKeep; i++) {
+		int index = _attsToKeep[i]; //fixed this equation to work with our project in querycompiler
+		//cout << "index: " << index << endl;
+		if ((index >= 0) && (index < numAtts)) {
+			Attribute a; a = copy[index];
+			//cout << "att: " << a.name << endl;
 			atts.push_back(a);
 		}
 		else {

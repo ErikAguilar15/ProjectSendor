@@ -131,7 +131,7 @@ Project::~Project() {
 
 bool Project::GetNext(Record& _record){
 
-	//cout << "Run Project: GETNEXT" << endl;
+	cout << "Run Project: GETNEXT" << endl;
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 
@@ -373,7 +373,7 @@ Sum::~Sum() {
 
 bool Sum::GetNext(Record& _record){
 
-	//cout << "Run Sum: GETNEXT" << endl;
+	cout << "Run Sum: GETNEXT" << endl;
 	if (recordSent) return false;
 	//Keep running sums of each type
 	int intSum = 0;
@@ -427,9 +427,14 @@ GroupBy::GroupBy(Schema& _schemaIn, Schema& _schemaOut, OrderMaker& _groupingAtt
 	Function& _compute,	RelationalOp* _producer) {
 	schemaIn = _schemaIn;
 	schemaOut = _schemaOut;
-	groupingAtts = _groupingAtts;
+	groupingAtts.Swap(_groupingAtts);
+	//groupingAtts = _groupingAtts; //THIS DOESNT WORK
+	//cout << "creating groupby: " << groupingAtts << endl;
 	compute = _compute;
 	producer = _producer;
+
+	counter = 0;
+	phase = 0;
 }
 GroupBy::~GroupBy() {
 
@@ -437,9 +442,146 @@ GroupBy::~GroupBy() {
 
 bool GroupBy::GetNext(Record& _record){
 
-	//cout << "Run GroupBy: GETNEXT" << endl;
-	_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
+	//split into two phases
+	//out << "Run GroupBy: GETNEXT" << endl;
+	//_record.Project(groupingAtts.whichAtts, groupingAtts.numAtts, schemaIn.GetNumAtts());
 
+	//check for aggregates
+	bool check = compute.HasOps();
+
+	//Build map
+	if (phase == 0) {
+
+		Record rec;
+		//cout << "groupby producer : " << producer->print(cout) << endl;
+		while (producer->GetNext(rec)) {
+
+			int i = 0;
+			//rec.print(cout, schemaOut);
+			//cout << endl;
+
+			double result = 0;
+			Schema copy = schemaOut;
+			//attributeStorage = copy.GetAtts();
+
+			if (check) {
+
+				int runningIntSum = 0;
+				double runningDoubleSum = 0;
+				compute.Apply(rec, runningIntSum, runningDoubleSum);
+				result = runningDoubleSum + (double)runningIntSum;
+
+				//cout << "hello" << endl;
+				vector<int> keep;
+				for(i = 1; i < copy.GetNumAtts(); i++){
+					keep.push_back(i);
+				}
+
+				copy.ProjectX(keep);
+
+			}
+			else {
+				//cout << "here" << endl;
+				vector<int> keep;
+				for(i = 1; i < copy.GetNumAtts(); i++){
+					keep.push_back(i);
+				}
+
+				copy.ProjectX(keep);
+			}
+
+			//cout << "check " << groupingAtts.numAtts << endl;
+			rec.Project(&groupingAtts.whichAtts[0], groupingAtts.numAtts, schemaIn.GetNumAtts());
+			//cout << "check1" << endl;
+			KeyString name = rec.makeKey(copy);
+			KeyString name2 = name;
+			//cout << name << endl;
+
+			//cout << "clout" << endl;
+			if (!groups.IsThere(name)) {
+				KeyDouble value = result;
+				groups.Insert(name,value);
+				groupsRecs.Insert(name2, rec); //name is empty? why?
+			} else {
+				KeyDouble value;
+				value = groups.Find(name);
+				groups.Remove(name, name, value);
+				value = value + result;
+				groups.Insert(name, value);
+			}
+
+		}
+
+		groups.MoveToStart();
+		groupsRecs.MoveToStart();
+		//groupsRecs.Retreat();
+		phase = 1;
+
+	}
+
+	//cout << "phase 2" << endl;
+	//Iterate group and keep running sum
+	if (phase == 1) {
+
+		if (!groups.AtEnd()) {
+
+			//cout << groups.CurrentKey() << endl;
+			//cout << groups.CurrentData() << endl;
+			Record rec;
+
+			if (check) {
+
+				//cout << "2" << endl;
+				Record recSum;
+				char* recBits[1];
+				int recSize;
+				bool recType = compute.GetType();
+
+				if(recType == Float) {
+					*((double *) recBits) = groups.CurrentData();
+					recSize = sizeof(double);
+				} else { // resType == Integer
+					*((int *) recBits) = (int)groups.CurrentData();
+					recSize = sizeof(int);
+				}
+
+				char* recComplete = new char[sizeof(int) + sizeof(int) + recSize];
+				((int*) recComplete)[0] = 2*sizeof(int) + recSize;
+				((int*) recComplete)[1] = 2*sizeof(int);
+				memcpy(recComplete+2*sizeof(int), recBits, recSize);
+
+				//cout << "2.2" << endl;
+				recSum.Consume(recComplete);
+
+				//cout << "2.3" << endl;
+				rec.AppendRecords(recSum, groupsRecs.CurrentData(), 1, schemaOut.GetNumAtts() - 1);
+
+				rec.print(cout, schemaOut);
+				cout << endl;
+				//groupsRecs.CurrentData().Nullify();
+			}
+			else {
+				rec.Swap(groupsRecs.CurrentData());
+				//cout << "3" << endl;
+			}
+
+			_record = rec;
+			//_record.print(cout, schemaOut);
+			groups.Advance();
+			groupsRecs.Advance();
+
+			return true; //FIX THE RETURN
+
+		}
+		else {
+
+			return false;
+
+		}
+
+	}
+
+	/*
 	int i = 0;
 	int runningIntSum = 0;
 	int runningDoubleSum = 0;
@@ -450,9 +592,11 @@ bool GroupBy::GetNext(Record& _record){
 	vector<string> attributeNames;
 	Schema copy = schemaOut;
 	attributeStorage = copy.GetAtts();
+
 	for(i = 1; i < copy.GetNumAtts(); i++){
 		attributeNames.push_back(attributeStorage[i].name);
 	}
+
 	while(producer->GetNext(_record)){
 
 		KeyString name = attributeStorage[vectorIterator].name;
@@ -491,13 +635,15 @@ bool GroupBy::GetNext(Record& _record){
 		vectorIterator++;
 		return true;
 	}
-		groups.MoveToStart();
-		for(int i = 0; i < groups.Length(); i++){
-			cout << groups.CurrentData() << endl;
-			groups.Advance();
-		}
-		return false;
+	groups.MoveToStart();
+	for(int i = 0; i < groups.Length(); i++){
+		cout << groups.CurrentData() << endl;
+		groups.Advance();
 	}
+	*/
+
+	return false;
+}
 
 Schema& GroupBy::getSchemaIn() {
 	return schemaIn;
@@ -531,7 +677,7 @@ WriteOut::~WriteOut() {
 }
 
 bool WriteOut::GetNext(Record& _record){
-	//cout << "Run WriteOut: GETNEXT" << endl;
+	cout << "Run WriteOut: GETNEXT" << endl;
 	//producer->print(cout);
 	while (producer->GetNext(_record)) {
 		//cout << "WRITEOUT" << endl;
@@ -539,8 +685,8 @@ bool WriteOut::GetNext(Record& _record){
 		_record.print(outFileStream,schema);
 		outFileStream<<endl;
 
-		_record.print(cout, schema);
-		cout << endl;
+		//_record.print(cout, schema);
+		//cout << endl;
 	}
 
 	/*bool writeout = producer->GetNext(_record);

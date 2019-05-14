@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
+#include <map>
 
 #include "Schema.h"
 #include "Record.h"
@@ -250,7 +251,10 @@ private:
 	// operator generating data
 	RelationalOp* producer;
 
+	int phase;
+	int counter;
 	EfficientMap<KeyString, KeyDouble> groups;
+	EfficientMap<KeyString, Record> groupsRecs;
 
 public:
 	GroupBy(Schema& _schemaIn, Schema& _schemaOut, OrderMaker& _groupingAtts,

@@ -273,7 +273,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 	// create the remaining operators based on the query
 
-	// - Project -
+	// - Project Setup-
 	Join* joinCast = dynamic_cast<Join*>(rootJoinRelationalOp);
 	Select* selectCast = dynamic_cast<Select*>(rootJoinRelationalOp);
 	Scan* scanCast = dynamic_cast<Scan*>(rootJoinRelationalOp);
@@ -455,35 +455,119 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 	// - GroupBy -
 	else if (_groupingAtts != NULL) {
-		//vector<string> groupByAttributes;
-		//vector<string> groupBYAttributeTypes;
-		//vector<unsigned int> groupByDistincts;
-		vector<int> keepMe;
+
+		vector<string> groupByAttributes;
+		vector<string> groupByAttributeTypes;
+		vector<unsigned int> groupByDistincts;
+
+		int attNo = 0;
+		vector<int> keep;
+
 		NameList* grouping = _groupingAtts;
+
+		while (grouping != NULL) {
+
+			string attName = string(grouping->name);
+			int noDistinct = schemaIn.GetDistincts(attName);
+			//cout << "group schema in" << schemaIn << endl;
+			//cout << "group schema out" << schemaOut << endl;
+
+			Type typeGroup;
+			typeGroup = schemaIn.FindType(attName);
+
+			switch (typeGroup) {
+				case Integer: groupByAttributeTypes.push_back("INTEGER");
+							break;
+				case Float: groupByAttributeTypes.push_back("FLOAT");
+							break;
+				case String: groupByAttributeTypes.push_back("STRING");
+							break;
+				default: groupByAttributeTypes.push_back("UNKNOWN");
+			}
+
+			groupByAttributes.push_back(attName);
+			groupByDistincts.push_back(noDistinct);
+
+			keep.push_back(schemaIn.Index(attName));
+			attNo++;
+
+			grouping = grouping->next;
+
+		}
+
 		//String str(grouping->name);
 		//keepMe.push_back(schemaIn.Index(str));
 		//attributes.push_back(str);
-		Type typeGroup;
+
+		//Type typeGroup;
 		//typeGroup = schemaIn.FindType(name);
 
-		OrderMaker attsToGroup;
-		// I have no idea if we need to use the constructor with the Schema parameter. (Get the schema for the atts that are on the group by).
-		// I think the default constructor will worked fine.
+		//Check for aggregates
+		Function compute;
+		FuncOperator *fit = _finalFunction;
+		if (_finalFunction != NULL) {
+			compute.GrowFromParseTree(_finalFunction, schemaIn);
 
-		switch (typeGroup) {
-			case Integer: attributeTypes.push_back("INTEGER");
-						break;
-			case Float: attributeTypes.push_back("FLOAT");
-						break;
-			case String: attributeTypes.push_back("STRING");
-						break;
-			default: attributeTypes.push_back("UNKNOWN");
+			string sAtt = "sum(";
+			string fAtt;
+
+			while (fit != NULL)
+			{
+				//cout << sAtt << endl;
+				if (fit->leftOperator != NULL)
+				{
+					fAtt = fit->leftOperator->leftOperand->value;
+				}
+				else if (fit->leftOperand != NULL)
+				{
+					fAtt = fit->leftOperand->value;
+					//cout << fit->leftOperand->value << endl;
+					//cout << "findex: " << f << endl;
+				}
+				else
+				{
+					//cout << "NULL " << "findex: " << f << endl;
+				}
+				if (fit->right != NULL)
+				{
+					fAtt = " ";
+					fAtt = fit->code;
+					fAtt =  " ";
+				}
+				fit = fit->right;
+				//f++;
+			}
+
+			cout << fAtt << endl;
+			sAtt += fAtt;
+			sAtt += ")";
+
+			groupByAttributes.push_back(sAtt);
+			groupByAttributeTypes.push_back(compute.GetTypeAsString());
+			groupByDistincts.push_back(1);
 		}
 
-		Function compute;
-		// I have no idea if this is needed for proj 2. Included it for now.
-		// NOTE, for groupby, only execute the line below IF there is a _finalFunction. (Check if _finalFunction is NULL or not). Can't growFromParseTree if _finalFunction is NULL.
-		compute.GrowFromParseTree(_finalFunction, schemaIn);
+		reverse(groupByAttributes.begin(), groupByAttributes.end());
+		reverse(groupByAttributeTypes.begin(), groupByAttributeTypes.end());
+		reverse(groupByDistincts.begin(), groupByDistincts.end());
+		reverse(keep.begin(), keep.end());
+
+		int size = keep.size();
+		keepMe = new int[size];
+		copy(keep.begin(), keep.end(), keepMe);
+
+		for (int i = 0; i < groupByAttributes.size(); i++) {
+			cout << "groupby atts: " << groupByAttributes[i] << endl;
+		}
+
+		for (int i = 0; i < size; i++) {
+			cout << "groupby keepme: " << keepMe[i] << endl;
+		}
+
+		OrderMaker attsToGroup(schemaIn, keepMe, attNo);
+
+		cout << attsToGroup << endl; //attsToGroup doesnt copy over
+
 		GroupBy *groupByRealOp = new GroupBy(schemaIn, schemaOut, attsToGroup, compute, rootJoinRelationalOp);
 		secondLastRelOp = groupByRealOp;
 	}
@@ -524,4 +608,10 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
     _queryTree.SetRoot(*rootJoinRelationalOp);
 
 	// free the memory occupied by the parse tree since it is not necessary anymore
+	_tables = NULL;
+	_attsToSelect = NULL;
+	_finalFunction = NULL;
+	_predicate = NULL;
+	_groupingAtts = NULL;
+	//_queryTree = NULL;
 }

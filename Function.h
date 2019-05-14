@@ -40,6 +40,16 @@ public:
 
 	// applies the function to the given record and returns the result
 	Type Apply (Record& toMe, int& intResult, double &doubleResult);
+
+	// return type of result of this function (Integer or Float)
+	Type GetType();
+
+	// return type of result of this function as string (INTGER or FLOAT)
+	string GetTypeAsString();
+
+	//Return true if there is a final function
+	bool HasOps();
+
 };
 
 #endif // _FUNCTION_H
