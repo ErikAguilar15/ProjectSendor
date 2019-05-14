@@ -154,7 +154,8 @@ private:
 
 	//Multi-map for hash join
 	EfficientMap<KeyString, Record> multiMap;
-	TwoWayList<Record> deleteList;
+	EfficientMap<KeyString, Record> multiMap0;
+	EfficientMap<KeyString, Record> deleteList;
 	OrderMaker oLeft;
 	OrderMaker oRight;
 

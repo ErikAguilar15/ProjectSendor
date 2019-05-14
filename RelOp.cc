@@ -248,7 +248,7 @@ bool Join::GetNext(Record& _record){
 	//Need to make an if statement to determine which to use
 	//cout << "Running JOIN: GETNEXT" << endl;
 	//return NestedLoop(_record);
-	return Hash(_record);
+	return NestedLoop(_record);
 
 	//Hash(_record);
 }
@@ -343,6 +343,7 @@ bool Join::NestedLoop(Record& _record){
 bool Join::Hash(Record& _record){
 	//Build phase
 	Record rec;
+	Record rec2;
 	Record currRec;
 	SwapInt data = 0;
 	bool running = true;
@@ -357,6 +358,7 @@ bool Join::Hash(Record& _record){
 			//multiMap.Insert(name, rec);
 
 			Schema copy = schemaLeft;
+			rec2 = rec;
 			vector <int> keep;
 
 			for (int i = 0; i < oLeft.numAtts; i++) {
@@ -366,33 +368,89 @@ bool Join::Hash(Record& _record){
 			}
 			copy.Project(keep);
 
-			rec.Project(&oLeft.whichAtts[0], oLeft.numAtts, schemaLeft.GetNumAtts());
-			KeyString name = rec.makeKey(copy);
+			rec2.Project(&oLeft.whichAtts[0], oLeft.numAtts, schemaLeft.GetNumAtts());
+			KeyString name = rec2.makeKey(copy);
 			//cout << name << endl;
 
+			//rec.print(cout, schemaLeft);
+			//cout << endl;
 			multiMap.Insert(name, rec);
 		}
 		running = false;
 		multiMap.MoveToStart();
 	}
 
+	/*while(!multiMap.AtEnd()) {
+		//multiMap.CurrentData().print(cout, schemaLeft);
+		cout << multiMap.CurrentKey() << endl;
+		multiMap.Advance();
+	}*/
+
+	int check = right->GetNext(currentRecord);
 	while (true) {
 
 		//Step 1 get record and add to list
-		int check = right->GetNext(currentRecord);
+		//int check = right->GetNext(currentRecord);
 
 		if(!check) {
 			return false;
 		}
 
 		//Record *rec1 = &multiMap.CurrentData();
-		Schema copy;
+		Schema copy = schemaRight;
+		vector <int> keep;
 
-		//if (multiMap.isThere()) {
+		for (int i = 0; i < oRight.numAtts; i++) {
+			int temp = oRight.whichAtts[i];
+			//cout << temp;
+			keep.push_back(temp);
+		}
+		copy.Project(keep);
 
-		//}
+		rec = currentRecord;
+		rec.Project(&oRight.whichAtts[0], oLeft.numAtts, schemaRight.GetNumAtts());
+		KeyString name = rec.makeKey(copy);
+		//cout << name << endl;
 
-		//check = predicate.Run()
+		check = multiMap.IsThere(name);
+		//cout << "check" << check << endl;
+		while(check == 1) {
+			Record rec0;
+			//cout << "hi" << endl;
+			multiMap.Remove(name, name, rec0);
+			//cout << name << endl;
+			//rec.print(cout, schemaLeft);
+			deleteList.Insert(name, rec0);
+			//cout << check << endl;
+			check = multiMap.IsThere(name);
+			//cout << check << endl;
+		}
+
+		//cout << "wtf" << endl;
+		deleteList.MoveToStart();
+
+		//cout << schemaLeft.GetNumAtts() << endl << schemaRight.GetNumAtts() << endl;
+		//cout << oLeft.numAtts << endl << oRight.numAtts << endl;
+		while (!deleteList.AtEnd()) {
+			Record *rec1 = &deleteList.CurrentData();
+			check = predicate.Run(*rec1, currentRecord);
+			//cout << "check: " << check << endl;
+			if  (check) {
+				//rec1->print(cout, schemaLeft);
+				//currentRecord.print(cout, schemaRight);
+				_record.AppendRecords(*rec1, currentRecord, schemaLeft.GetNumAtts(), schemaRight.GetNumAtts());
+				deleteList.Advance();
+				return true;
+			}
+			//cout << "here?!" << endl;
+			deleteList.Advance();
+			//cout << "here" << endl;
+		}
+
+		deleteList.MoveToStart();
+		//multiMap.SuckUp(deleteList);
+		//deleteList.Clear();
+		check = right->GetNext(currentRecord);
 
 	}
 

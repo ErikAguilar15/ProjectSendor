@@ -394,8 +394,9 @@ void Record :: AppendRecords (Record& left, Record& right,
 }
 
 string Record :: makeKey(Schema& _schema) {
-	stringstream ss;
+	stringstream ss, ss0;
 	int n = _schema.GetNumAtts();
+	int fix = 15;
 	vector<Attribute> atts = _schema.GetAtts();
 
 	//cout << "sscheck" << endl;
@@ -414,6 +415,14 @@ string Record :: makeKey(Schema& _schema) {
 		//THERE IS A SEGMENTATIO ERROR HERE INSIDE EACH CASE WITH THE SS PART
 		if (atts[i].type == Integer) {
 			int *myInt = (int *) &(bits[pointer]);
+			//for (int j = 0 + poiner; j < fix; j++) ss << "0";
+			ss0 << *myInt;
+			string temp;
+			ss0 >> temp;
+
+			int size = temp.length();
+			for (int j = 0; j < fix - size; j++) ss << "0";
+
 			ss << *myInt;
 		}
 		// then is a double
