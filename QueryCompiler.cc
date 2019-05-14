@@ -446,6 +446,7 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		// I have no idea if this is needed for proj 2. Included it for now.
 		compute.GrowFromParseTree(_finalFunction, schemaIn);
 		attributes.push_back("Sum");
+		cout << "I NEED TO CHANGE THE TYPE HERE" << endl;
 		attributeTypes.push_back("FLOAT");
 		distincts.push_back(1);
 		//Schema schemaOut(attributes, attributeTypes, distincts);

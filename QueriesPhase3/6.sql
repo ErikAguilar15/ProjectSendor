@@ -1,4 +1,3 @@
-SELECT l_orderkey 
+SELECT l_orderkey
 FROM lineitem
-WHERE l_quantity>30.0
-
+WHERE l_quantity > 30
