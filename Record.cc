@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 #include "Config.h"
 #include "Swap.h"
@@ -390,6 +391,50 @@ void Record :: AppendRecords (Record& left, Record& right,
 		// note that we are moving along in the record
 		curPos += attLen;
 	}
+}
+
+string Record :: makeKey(Schema& _schema) {
+	stringstream ss;
+	int n = _schema.GetNumAtts();
+	vector<Attribute> atts = _schema.GetAtts();
+
+	//cout << "sscheck" << endl;
+	for (int i = 0; i < n; i++) {
+		// print the attribute index, instead of name to make it short
+		ss << i << ":";
+
+		//cout << "sscheck" << i << " " << atts[i].name << endl;
+		// use the i^th slot at the head of the record to get the
+		// offset to the correct attribute in the record
+		int pointer = ((int *) bits)[i + 1];
+
+		// here we determine the type, which given in the schema;
+		// depending on the type we then print out the contents
+		// first is integer
+		//THERE IS A SEGMENTATIO ERROR HERE INSIDE EACH CASE WITH THE SS PART
+		if (atts[i].type == Integer) {
+			int *myInt = (int *) &(bits[pointer]);
+			ss << *myInt;
+		}
+		// then is a double
+		else if (atts[i].type == Float) {
+			double *myDouble = (double *) &(bits[pointer]);
+			ss << *myDouble;
+		}
+		// then is a character string
+		else if (atts[i].type == String) {
+			char *myString = (char *) &(bits[pointer]);
+			ss << myString;
+		}
+
+
+		// print out a comma as needed to separate tuples
+		if (i != n - 1) {
+			ss << ",";
+		}
+	}
+
+	return ss.str();
 }
 
 ostream& Record :: print(ostream& _os, Schema& mySchema) {

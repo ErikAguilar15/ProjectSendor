@@ -78,6 +78,7 @@ public:
 	// index begins from 0
 	// return -1 if failure, 0 otherwise
 	int Project(vector<int>& _attsToKeep);
+	int ProjectX(vector<int>& _attsToKeep);
 
 	// find type of the specified attribute
 	// return arbitrary type if attribute is not present

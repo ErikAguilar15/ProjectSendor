@@ -75,6 +75,8 @@ public:
 	void AppendRecords (Record& left, Record& right,
 		int numAttsLeft, int numAttsRight);
 
+		string makeKey(Schema& _schema);
+
 	// print record content based on schema
     ostream& print(ostream& _os, Schema& mySchema);
 };

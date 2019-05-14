@@ -503,10 +503,45 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 
 		//Check for aggregates
 		Function compute;
+		FuncOperator *fit = _finalFunction;
 		if (_finalFunction != NULL) {
 			compute.GrowFromParseTree(_finalFunction, schemaIn);
 
-			groupByAttributes.push_back("sum");
+			string sAtt = "sum(";
+			string fAtt;
+
+			while (fit != NULL)
+			{
+				//cout << sAtt << endl;
+				if (fit->leftOperator != NULL)
+				{
+					fAtt = fit->leftOperator->leftOperand->value;
+				}
+				else if (fit->leftOperand != NULL)
+				{
+					fAtt = fit->leftOperand->value;
+					//cout << fit->leftOperand->value << endl;
+					//cout << "findex: " << f << endl;
+				}
+				else
+				{
+					//cout << "NULL " << "findex: " << f << endl;
+				}
+				if (fit->right != NULL)
+				{
+					fAtt = " ";
+					fAtt = fit->code;
+					fAtt =  " ";
+				}
+				fit = fit->right;
+				//f++;
+			}
+
+			cout << fAtt << endl;
+			sAtt += fAtt;
+			sAtt += ")";
+
+			groupByAttributes.push_back(sAtt);
 			groupByAttributeTypes.push_back(compute.GetTypeAsString());
 			groupByDistincts.push_back(1);
 		}
@@ -520,7 +555,17 @@ void QueryCompiler::Compile(TableList* _tables, NameList* _attsToSelect,
 		keepMe = new int[size];
 		copy(keep.begin(), keep.end(), keepMe);
 
+		for (int i = 0; i < groupByAttributes.size(); i++) {
+			cout << "groupby atts: " << groupByAttributes[i] << endl;
+		}
+
+		for (int i = 0; i < size; i++) {
+			cout << "groupby keepme: " << keepMe[i] << endl;
+		}
+
 		OrderMaker attsToGroup(schemaIn, keepMe, attNo);
+
+		cout << attsToGroup << endl; //attsToGroup doesnt copy over
 
 		GroupBy *groupByRealOp = new GroupBy(schemaIn, schemaOut, attsToGroup, compute, rootJoinRelationalOp);
 		secondLastRelOp = groupByRealOp;

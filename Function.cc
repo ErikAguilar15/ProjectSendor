@@ -14,6 +14,7 @@ using namespace std;
 
 Function :: Function () {
 	opList = new Arithmetic[MAX_FUNCTION_DEPTH];
+	numOps = 0; //added
 }
 
 Function :: Function(const Function& _copyMe) : numOps(_copyMe.numOps),
@@ -218,6 +219,14 @@ string Function :: GetTypeAsString() {
 		return "INTEGER";
 	else
 		return "FLOAT";
+}
+
+bool Function :: HasOps() {
+	//cout << "numops: " << numOps << endl;
+	if(numOps > 0)
+		return true;
+	else
+		return false;
 }
 
 void Function :: GrowFromParseTree (FuncOperator* parseTree, Schema& mySchema) {

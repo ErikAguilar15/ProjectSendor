@@ -47,6 +47,9 @@ public:
 	// return type of result of this function as string (INTGER or FLOAT)
 	string GetTypeAsString();
 
+	//Return true if there is a final function
+	bool HasOps();
+
 };
 
 #endif // _FUNCTION_H
