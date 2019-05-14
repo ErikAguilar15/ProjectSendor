@@ -70,6 +70,8 @@ bool Comparison :: Run (Record& left, Record& right) {
 			switch (op) {
 				case LessThan: return (val1Int < val2Int);
 				case GreaterThan: return (val1Int > val2Int);
+				//case LessThanEquals: return (val1Int <= val2Int);
+				//case GreaterThanEquals: return (val1Int >= val2Int);
 				default: return (val1Int == val2Int);
 			}
 		}
@@ -82,6 +84,8 @@ bool Comparison :: Run (Record& left, Record& right) {
 			switch (op) {
 				case LessThan: return (val1Double < val2Double);
 				case GreaterThan: return (val1Double > val2Double);
+				//case LessThanEquals: return (val1Double <= val2Double);
+				//case GreaterThanEquals: return (val1Double >= val2Double);
 				default: return (val1Double == val2Double);
 			}
 		}
@@ -92,6 +96,8 @@ bool Comparison :: Run (Record& left, Record& right) {
 			switch (op) {
 				case LessThan: return (tempResult < 0);
 				case GreaterThan: return (tempResult > 0);
+				//case LessThanEquals: return (tempResult <= 0);
+				//case GreaterThanEquals: return (tempResult >= 0);
 				default: return (tempResult == 0);
 			}
 		}
@@ -105,6 +111,8 @@ ostream& operator<<(ostream& _os, Comparison& _c) {
 
 	if (_c.op == LessThan) _os << " < ";
 	else if (_c.op == GreaterThan) _os << " > ";
+	//else if (_c.op == GreaterThanEquals) _os << " >= ";
+	//else if (_c.op == LessThanEqualsThan) _os << " <= ";
 	else _os << " = ";
 
 	if (_c.operand2 == Left) _os << "Left[" << _c.whichAtt2 << "]";
@@ -580,6 +588,8 @@ int CNF::ExtractCNF (AndList& parseTree, Schema& schema, Record& literal) {
 		// and finally set up the comparison operator for this comparison
 		if (currCond->left->code == LESS_THAN) andList[numAnds].op = LessThan;
 		else if (currCond->left->code == GREATER_THAN) andList[numAnds].op = GreaterThan;
+		//else if (currCond->left->code == LESS_THAN_EQUALS) andList[numAnds].op = LessThanEquals;
+		//else if (currCond->left->code == GREATER_THAN_EQUALS) andList[numAnds].op = GreaterThanEquals;
 		else if (currCond->left->code == EQUALS) andList[numAnds].op = Equals;
 		else {
 			cerr << "ERROR: Unknown comparison operator for " << currCond->left->left->value
@@ -701,6 +711,8 @@ int CNF::ExtractCNF (AndList& parseTree, Schema& leftSchema, Schema& rightSchema
 		// and finally set up the comparison operator for this comparison
 		if (currCond->left->code == LESS_THAN) andList[numAnds].op = LessThan;
 		else if (currCond->left->code == GREATER_THAN) andList[numAnds].op = GreaterThan;
+		//else if (currCond->left->code == LESS_THAN_EQUALS) andList[numAnds].op = LessThanEquals;
+		//else if (currCond->left->code == GREATER_THAN_EQUALS) andList[numAnds].op = GreaterThanEquals;
 		else if (currCond->left->code == EQUALS) andList[numAnds].op = Equals;
 		else {
 			cerr << "ERROR: Unknown comparison operator for " << currCond->left->left->value
@@ -781,6 +793,8 @@ int CNF::ExtractCNF (AndList& parseTree, Schema& leftSchema, Schema& rightSchema
 		// and finally set up the comparison operator for this comparison
 		if (currCond->left->code == LESS_THAN) andList[numAnds].op = LessThan;
 		else if (currCond->left->code == GREATER_THAN) andList[numAnds].op = GreaterThan;
+		//else if (currCond->left->code == LESS_THAN_EQUALS) andList[numAnds].op = LessThanEquals;
+		//else if (currCond->left->code == GREATER_THAN_EQUALS) andList[numAnds].op = GreaterThanEquals;
 		else if (currCond->left->code == EQUALS) andList[numAnds].op = Equals;
 		else {
 			cerr << "ERROR: Unknown comparison operator for " << currCond->left->left->value
