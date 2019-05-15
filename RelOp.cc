@@ -78,7 +78,7 @@ Select::~Select() {
 
 bool Select::GetNext(Record& _record){
 
-	//cout << "Run Select: GETNEXT" << endl;
+	cout << "Run Select: GETNEXT" << endl;
 
 	while (true) {
 		int check = producer->GetNext(_record);
@@ -134,7 +134,7 @@ Project::~Project() {
 
 bool Project::GetNext(Record& _record){
 
-	//cout << "Run Project: GETNEXT" << endl;
+	cout << "Run Project: GETNEXT" << endl;
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 
@@ -247,8 +247,8 @@ bool Join::GetNext(Record& _record){
 	//cout << "OUTPUT SOMETHING" << endl;
 	//Need to make an if statement to determine which to use
 	//cout << "Running JOIN: GETNEXT" << endl;
-	//return NestedLoop(_record);
 	return NestedLoop(_record);
+	//return Hash(_record);
 
 	//Hash(_record);
 }
@@ -324,8 +324,8 @@ bool Join::NestedLoop(Record& _record){
 					//cout << "OUTPUT SOMETHING ELSE HERE" << endl;
 					_record.AppendRecords(*rec1, currentRecord, schemaLeft.GetNumAtts(), schemaRight.GetNumAtts());
 					//cout << schemaOut;
-					//_record.print(cout, schemaOut);
-					//cout << endl;
+					_record.print(cout, schemaOut);
+					cout << endl;
 					//cout << "SOMETHING PLEASE";
 					//cout << endl;
 					TwoWayJoins.Advance();
@@ -379,8 +379,8 @@ bool Join::Hash(Record& _record){
 		running = false;
 		multiMap.MoveToStart();
 	}
-
-	/*while(!multiMap.AtEnd()) {
+	/*
+	while(!multiMap.AtEnd()) {
 		//multiMap.CurrentData().print(cout, schemaLeft);
 		cout << multiMap.CurrentKey() << endl;
 		multiMap.Advance();
@@ -419,7 +419,7 @@ bool Join::Hash(Record& _record){
 			//cout << "hi" << endl;
 			multiMap.Remove(name, name, rec0);
 			//cout << name << endl;
-			//rec.print(cout, schemaLeft);
+			//rec0.print(cout, schemaLeft);
 			deleteList.Insert(name, rec0);
 			//cout << check << endl;
 			check = multiMap.IsThere(name);
@@ -475,7 +475,7 @@ DuplicateRemoval::~DuplicateRemoval() {
 }
 
 bool DuplicateRemoval::GetNext(Record& _record){
-	//cout << "Run Duplicate Removal: GETNEXT" << endl;
+	cout << "Run Duplicate Removal: GETNEXT" << endl;
 	while(producer->GetNext(_record)) {
 		stringstream ss;
 		_record.print(ss, schema);

@@ -67,7 +67,7 @@ int DBFile::Close () {
 }
 
 void DBFile::MoveFirst () {
-	currentPage = 0;
+	currentPage = 1;
 	//file.GetPage(page, currentPage);
 	page.EmptyItOut();
 }
