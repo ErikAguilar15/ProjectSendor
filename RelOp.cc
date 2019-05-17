@@ -78,7 +78,7 @@ Select::~Select() {
 
 bool Select::GetNext(Record& _record){
 
-	cout << "Run Select: GETNEXT" << endl;
+	//cout << "Run Select: GETNEXT" << endl;
 
 	while (true) {
 		int check = producer->GetNext(_record);
@@ -134,7 +134,7 @@ Project::~Project() {
 
 bool Project::GetNext(Record& _record){
 
-	cout << "Run Project: GETNEXT" << endl;
+	//cout << "Run Project: GETNEXT" << endl;
 	int check = producer->GetNext(_record);
 	//producer->print(cout);
 
@@ -176,7 +176,7 @@ ostream& Project::print(ostream& _os) {
 //-------------------------------------------------------JOIN --------------------------------------------------------------------------------------
 Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	CNF& _predicate, RelationalOp* _left, RelationalOp* _right) {
-	cout << "making join" << endl;
+	//cout << "making join" << endl;
 	schemaLeft = _schemaLeft;
 	//cout << "Join schemaleft: " << schemaLeft << endl;
 	schemaRight = _schemaRight;
@@ -200,7 +200,7 @@ Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 
 Join:: Join(Schema& _schemaLeft, Schema& _schemaRight, Schema& _schemaOut,
 	CNF& _predicate, RelationalOp* _left, RelationalOp* _right, OrderMaker& _oRight, OrderMaker& _oLeft) {
-	cout << "making join" << endl;
+	//cout << "making join" << endl;
 	schemaLeft = _schemaLeft;
 	//cout << "Join schemaleft: " << schemaLeft << endl;
 	schemaRight = _schemaRight;
@@ -324,8 +324,8 @@ bool Join::NestedLoop(Record& _record){
 					//cout << "OUTPUT SOMETHING ELSE HERE" << endl;
 					_record.AppendRecords(*rec1, currentRecord, schemaLeft.GetNumAtts(), schemaRight.GetNumAtts());
 					//cout << schemaOut;
-					_record.print(cout, schemaOut);
-					cout << endl;
+					//_record.print(cout, schemaOut);
+					//cout << endl;
 					//cout << "SOMETHING PLEASE";
 					//cout << endl;
 					TwoWayJoins.Advance();
@@ -475,7 +475,7 @@ DuplicateRemoval::~DuplicateRemoval() {
 }
 
 bool DuplicateRemoval::GetNext(Record& _record){
-	cout << "Run Duplicate Removal: GETNEXT" << endl;
+	//cout << "Run Duplicate Removal: GETNEXT" << endl;
 	while(producer->GetNext(_record)) {
 		stringstream ss;
 		_record.print(ss, schema);
@@ -516,7 +516,7 @@ Sum::~Sum() {
 
 bool Sum::GetNext(Record& _record){
 
-	cout << "Run Sum: GETNEXT" << endl;
+	//cout << "Run Sum: GETNEXT" << endl;
 	if (recordSent) return false;
 	//Keep running sums of each type
 	int intSum = 0;
@@ -824,7 +824,7 @@ WriteOut::~WriteOut() {
 }
 
 bool WriteOut::GetNext(Record& _record){
-	cout << "Run WriteOut: GETNEXT" << endl;
+	//cout << "Run WriteOut: GETNEXT" << endl;
 	//producer->print(cout);
 	while (producer->GetNext(_record)) {
 		//cout << "WRITEOUT" << endl;
